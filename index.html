@@ -507,17 +507,20 @@ function resetAll() {
 }
 
 function showSection(id, btn) {
-  document.querySelectorAll('.section').forEach(function(s) { s.classList.remove('active'); });
-  document.querySelectorAll('.nav-item').forEach(function(n) { n.classList.remove('active'); });
-  document.getElementById('s-' + id).classList.add('active');
-  if (btn) btn.classList.add('active');
-  if (id === 'dashboard') renderDash();
-  if (id === 'riparazioni') renderRip();
-  if (id === 'magazzino') renderMag();
-  if (id === 'fatture') renderFat();
-  if (id === 'storico') renderStorico();
-  if (id === 'statistiche') renderStats();
-  if (id === 'impostazioni') loadSettingsForm();
+  try {
+    document.querySelectorAll('.section').forEach(function(sec) { sec.classList.remove('active'); });
+    document.querySelectorAll('.nav-item').forEach(function(nav) { nav.classList.remove('active'); });
+    var el = document.getElementById('s-' + id);
+    if (el) el.classList.add('active');
+    if (btn) btn.classList.add('active');
+    if (id === 'dashboard') renderDash();
+    else if (id === 'riparazioni') renderRip();
+    else if (id === 'magazzino') renderMag();
+    else if (id === 'fatture') renderFat();
+    else if (id === 'storico') renderStorico();
+    else if (id === 'statistiche') renderStats();
+    else if (id === 'impostazioni') loadSettingsForm();
+  } catch(e) { console.log('showSection error', e); }
 }
 
 function openModal(id) {
@@ -897,8 +900,8 @@ var counts = statiReal.map(function(s) { return ripList.filter(function(r) { ret
 var max = Math.max.apply(null, counts) || 1;
 var colors = [’#ff8800’,’#ff5500’,’#4080ff’,’#40d080’,’#555’];
 document.getElementById(‘chart-stati’).innerHTML =
-‘<div class="chart-bar">’ + stati.map(function(s, i) {
-return ‘<div class="chart-col"><div style="font-size:12px;color:#f5f0ee;font-weight:600">’ + counts[i] + ‘</div><div style="background:' + colors[i] + ';border-radius:4px 4px 0 0;width:100%;height:' + Math.max(4, Math.round(counts[i] / max * 90)) + 'px"></div><div class="chart-label">’ + s + ‘</div></div>’;
+‘<div class="chart-bar">’ + stati.map(function(statolbl, i) {
+return ‘<div class="chart-col"><div style="font-size:12px;color:#f5f0ee;font-weight:600">’ + counts[i] + ‘</div><div style="background:' + colors[i] + ';border-radius:4px 4px 0 0;width:100%;height:' + Math.max(4, Math.round(counts[i] / max * 90)) + 'px"></div><div class="chart-label">’ + statolbl + ‘</div></div>’;
 }).join(’’) + ‘</div>’;
 var deviceCount = {};
 ripList.forEach(function(r) { var d = r.device.split(’ ‘).slice(0, 2).join(’ ‘); deviceCount[d] = (deviceCount[d] || 0) + 1; });
@@ -931,8 +934,8 @@ var max = Math.max.apply(null, counts) || 1;
 var colors = [’#ff8800’,’#ff5500’,’#4080ff’,’#40d080’,’#555’];
 var labels = [‘Attesa’,‘Lavoraz.’,‘Ricambio’,‘Pronto’,‘Consegn.’];
 document.getElementById(‘dash-chart’).innerHTML =
-‘<div class="chart-bar">’ + labels.map(function(s, i) {
-return ‘<div class="chart-col"><div style="font-size:11px;color:#f5f0ee;font-weight:600">’ + counts[i] + ‘</div><div style="background:' + colors[i] + ';border-radius:4px 4px 0 0;width:100%;height:' + Math.max(4, Math.round(counts[i] / max * 80)) + 'px"></div><div class="chart-label">’ + s + ‘</div></div>’;
+‘<div class="chart-bar">’ + labels.map(function(lbl, i) {
+return ‘<div class="chart-col"><div style="font-size:11px;color:#f5f0ee;font-weight:600">’ + counts[i] + ‘</div><div style="background:' + colors[i] + ';border-radius:4px 4px 0 0;width:100%;height:' + Math.max(4, Math.round(counts[i] / max * 80)) + 'px"></div><div class="chart-label">’ + lbl + ‘</div></div>’;
 }).join(’’) + ‘</div>’;
 }
 
@@ -1110,11 +1113,12 @@ document.getElementById(‘r-schema’).value = label + ’: ’ + nums;
 }
 
 // INIT
-
-refreshSidebarName();
-refreshLogo();
-renderDash();
-renderNotif();
+document.addEventListener(‘DOMContentLoaded’, function() {
+try { refreshSidebarName(); } catch(e) { console.log(‘sidebar name error’, e); }
+try { refreshLogo(); } catch(e) { console.log(‘logo error’, e); }
+try { renderDash(); } catch(e) { console.log(‘dash error’, e); }
+try { renderNotif(); } catch(e) { console.log(‘notif error’, e); }
+});
 </script>
 
 </body>
