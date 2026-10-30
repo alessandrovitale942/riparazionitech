@@ -190,6 +190,28 @@ button:focus-visible,.inp:focus-visible{outline:2px solid var(--amber);outline-o
 .jv-listen .jv-orb{animation:jvp 1.3s ease-in-out infinite}
 @keyframes jvp{50%{box-shadow:0 0 0 12px rgba(91,140,255,.14),0 0 44px rgba(60,160,255,.9)}}
 @media(prefers-reduced-motion:reduce){.jv-listen .jv-orb{animation:none}}
+.jv{background:linear-gradient(160deg,#10222d,#0a151d);border-color:rgba(63,208,255,.28);position:relative}
+.jv::after{content:"";position:absolute;left:0;right:0;top:0;height:2px;background:linear-gradient(90deg,transparent,#3fd0ff 40%,#fff 50%,#3fd0ff 60%,transparent);opacity:.45;pointer-events:none}
+.jv .btn-p{background:linear-gradient(135deg,#1fb5e8,#3fd0ff);color:#03121c;font-weight:600;box-shadow:0 6px 16px rgba(63,208,255,.3)}
+.jv-t{font:700 18px ui-monospace,"SF Mono",Consolas,monospace;letter-spacing:.3em;background:linear-gradient(180deg,#fff,#3fd0ff);-webkit-background-clip:text;background-clip:text;color:transparent}
+.jv-h{font-family:ui-monospace,"SF Mono",Consolas,monospace;font-size:13px;color:#3fd0ff}
+.jv-rx{width:96px;height:96px;flex:none;color:#3fd0ff;background:none;border:0;padding:0;cursor:pointer}
+.jv-rx svg{width:100%;height:100%;overflow:visible;filter:drop-shadow(0 0 8px currentColor)}
+.jv-rx *{transform-box:fill-box;transform-origin:center}
+.jv-rx .r1{animation:jvrs 30s linear infinite}.jv-rx .r2{animation:jvrsr 18s linear infinite}.jv-rx .r3{animation:jvrs 11s linear infinite}.jv-rx .sp{animation:jvrsr 40s linear infinite}.jv-rx .co{animation:jvcp 2.4s ease-in-out infinite}
+.jv-listen .jv-rx{color:#ffb020}
+.jv-listen .jv-rx .r1{animation-duration:8s}.jv-listen .jv-rx .r2{animation-duration:5s}.jv-listen .jv-rx .r3{animation-duration:3s}.jv-listen .jv-rx .co{animation-duration:.9s}
+.jv-rx.boot svg{animation:jvkick 1.7s cubic-bezier(.2,.8,.2,1)}.jv-rx.boot .co{animation:jvflare 1.7s ease-out}
+@keyframes jvrs{to{transform:rotate(360deg)}}@keyframes jvrsr{to{transform:rotate(-360deg)}}
+@keyframes jvcp{50%{transform:scale(1.18);opacity:.7}}
+@keyframes jvkick{0%{transform:scale(.5) rotate(-200deg);opacity:0}55%{transform:scale(1.15) rotate(8deg);opacity:1}100%{transform:none}}
+@keyframes jvflare{0%{transform:scale(.2);filter:brightness(4)}45%{transform:scale(2)}100%{transform:scale(1);filter:none}}
+.jv-boot{position:absolute;inset:0;z-index:3;display:none;place-items:center;background:radial-gradient(circle,#03121c,#000 80%);color:#7fe4ff;font:.8rem ui-monospace,"SF Mono",Consolas,monospace}
+.jv-boot.on{display:grid}
+.jv-boot .bl{letter-spacing:.2em;line-height:2.1}
+.jv-boot p{margin:0;opacity:0;animation:jvbt .4s forwards}.jv-boot p::before{content:"\25B8 "}
+@keyframes jvbt{to{opacity:1}}
+@media(prefers-reduced-motion:reduce){.jv-rx *,.jv-rx svg,.jv-boot p{animation:none!important}.jv-boot p{opacity:1}}
 .jv-err{padding:48px 24px;text-align:center;color:#c6ccd8}
 .jv-err p{margin:8px auto 16px;color:var(--mute);font-size:13px;max-width:420px}
 @media(prefers-reduced-motion:reduce){.hero-bar i{animation:none}}
@@ -238,8 +260,9 @@ button:focus-visible,.inp:focus-visible{outline:2px solid var(--amber);outline-o
   </div>
   <div id="d-hero"></div>
   <div class="card jv" id="jv-card">
+    <div class="jv-boot" id="jv-boot"></div>
     <div class="jv-bar">
-      <div class="jv-orb"></div>
+      <button class="jv-rx" id="jv-rx" onclick="jvVoce()" aria-label="Parla con Jarvis"><svg class="rx" viewBox="0 0 100 100" fill="none" stroke="currentColor" aria-hidden="true"><circle class="r1" cx="50" cy="50" r="46" stroke-width="1" stroke-dasharray="1.5 4.5" opacity=".8"/><circle class="r2" cx="50" cy="50" r="39" stroke-width="2" stroke-dasharray="26 7 9 7" opacity=".9"/><circle class="r3" cx="50" cy="50" r="31" stroke-width="3" stroke-dasharray="34 14" opacity=".95"/><g class="sp" stroke-width="2.2"><path d="M50 22V30M50 70V78M22 50H30M70 50H78M30 30l5.5 5.5M64.5 64.5L70 70M70 30l-5.5 5.5M35.5 64.5L30 70" opacity=".7"/></g><circle cx="50" cy="50" r="21" stroke-width="1" opacity=".6"/><circle class="co" cx="50" cy="50" r="13" fill="currentColor" stroke="none" opacity=".9"/><circle cx="50" cy="50" r="7" fill="#fff" stroke="none" opacity=".85"/></svg></button>
       <div class="jv-txt"><div class="jv-t">Jarvis</div><div class="jv-s" id="jv-line">Il tuo assistente vocale, collegato alle schede e al magazzino.</div><div class="jv-live" id="jv-live" style="display:none"><div class="jv-h" id="jv-heard"></div><div class="jv-r" id="jv-reply"></div></div></div>
       <button class="btn btn-g" id="jv-max" onclick="jvMax()" style="display:none">Schermo intero</button>
       <button class="btn btn-g" id="jv-screen" onclick="jvToggle()">Apri schermata</button>
@@ -2185,6 +2208,18 @@ function jvImp() {
   else jvCarica(box, function(ifr) { ifr.addEventListener('load', function() { apriDialog(ifr); }); });
 }
 
+var jvBooted = false;
+function jvBoot() {
+  var rx = document.getElementById('jv-rx');
+  rx.classList.remove('boot'); void rx.offsetWidth; rx.classList.add('boot');
+  setTimeout(function() { rx.classList.remove('boot'); }, 1800);
+  if (jvBooted) return;
+  jvBooted = true;
+  var b = document.getElementById('jv-boot'), L = ['INIZIALIZZAZIONE NUCLEO NEURALE', 'CARICAMENTO MODULI VOCALI', 'COLLEGAMENTO RIPARAZIONI E MAGAZZINO', 'TUTTI I SISTEMI ONLINE'];
+  b.innerHTML = '<div class="bl">' + L.map(function(x, k) { return '<p style="animation-delay:' + (0.2 + k * 0.4) + 's">' + x + '</p>'; }).join('') + '</div>';
+  b.classList.add('on');
+  setTimeout(function() { b.classList.remove('on'); }, 2600);
+}
 var jvPoll = null;
 function jvMic(ifr, avvia) {
   try {
@@ -2209,6 +2244,7 @@ function jvSpia(ifr) {
 function jvVoce() {
   var f = document.getElementById('jv-frame'), ifr = f.querySelector('iframe');
   if (ifr) { jvMic(ifr); return; }
+  jvBoot();
   f.className = 'jv-frame jv-bg'; f.style.display = 'block';
   document.getElementById('jv-live').style.display = '';
   jvCarica(f, function(i) { i.addEventListener('load', function() { jvMic(i, true); jvSpia(i); }); });
