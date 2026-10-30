@@ -183,6 +183,8 @@ button:focus-visible,.inp:focus-visible{outline:2px solid var(--amber);outline-o
 .jv-frame iframe{width:100%;height:100%;border:0;display:block}
 .jv-full{position:fixed;inset:12px;z-index:90;margin:0;display:flex;flex-direction:column;box-shadow:0 30px 90px rgba(0,0,0,.7)}
 .jv-full .jv-frame{flex:1;height:auto}
+.jv-err{padding:48px 24px;text-align:center;color:#c6ccd8}
+.jv-err p{margin:8px auto 16px;color:var(--mute);font-size:13px;max-width:420px}
 @media(prefers-reduced-motion:reduce){.hero-bar i{animation:none}}
 @media(max-width:1100px){.stats{grid-template-columns:repeat(2,1fr)}}
 </style>
@@ -214,6 +216,7 @@ button:focus-visible,.inp:focus-visible{outline:2px solid var(--amber);outline-o
     <button class="nav-btn"    id="nb-storico"      onclick="vai('storico',this)">&#128203; Storico</button>
     <button class="nav-btn"    onclick="toggleN()">&#128276; Notifiche <span id="nb-cnt" style="background:#ff8800;color:#000;font-size:10px;font-weight:700;border-radius:10px;padding:1px 6px;margin-left:auto;display:none">0</span></button>
     <button class="nav-btn"    id="nb-impostazioni" onclick="vai('impostazioni',this)">&#9881; Impostazioni</button>
+    <button class="nav-btn"    id="nb-jarvisimp"    onclick="vai('jarvisimp',this);jvImp()">&#127897; Impostazioni Jarvis</button>
   </nav>
 </aside>
 
@@ -432,6 +435,12 @@ button:focus-visible,.inp:focus-visible{outline:2px solid var(--amber);outline-o
   <div class="card">
     <table><thead><tr><th>#</th><th>Cliente</th><th>Tel</th><th>Dispositivo</th><th>Problema</th><th>Costo</th><th>Stato</th><th>Data</th></tr></thead><tbody id="st-tb"></tbody></table>
   </div>
+</section>
+
+<!-- IMPOSTAZIONI JARVIS -->
+<section id="sec-jarvisimp" class="sec">
+  <div class="page-h"><div class="page-title">Impostazioni Jarvis <small>Voce, chiavi API, comportamento</small></div></div>
+  <div class="card" style="margin-bottom:0"><div class="jv-frame" id="jvimp-frame" style="height:calc(100vh - 150px);min-height:560px;border-top:0"></div></div>
 </section>
 
 <!-- IMPOSTAZIONI -->
@@ -2140,11 +2149,39 @@ function renderNotif() {
 // ============================================================
 // DASHBOARD
 // ============================================================
+function jvUrl() { try { return localStorage.getItem('rp_jarvis_url') || 'jarvis.html'; } catch (e) { return 'jarvis.html'; } }
+function jvCarica(box, onFrame) {
+  var url = jvUrl();
+  function monta() {
+    box.innerHTML = '<iframe src="' + url + '" title="Jarvis" allow="microphone; autoplay; clipboard-write"></iframe>';
+    if (onFrame) onFrame(box.firstChild);
+  }
+  box.innerHTML = '<div class="jv-err">Carico Jarvis...</div>';
+  fetch(url, { method: 'HEAD', cache: 'no-store' }).then(function(r) {
+    if (r.ok) monta();
+    else box.innerHTML = '<div class="jv-err"><b>Non trovo Jarvis</b><p>Il file "' + url + '" non e nel sito. Caricalo nella stessa cartella di index.html, oppure indica dove si trova.</p><button class="btn btn-p btn-sm" onclick="jvImposta()">Indica dove si trova Jarvis</button></div>';
+  }).catch(monta);
+}
+function jvImposta() {
+  var v = prompt('Indirizzo di Jarvis (sullo stesso sito, es. jarvis.html oppure /jarvis/):', jvUrl());
+  if (!v) return;
+  try { localStorage.setItem('rp_jarvis_url', v.trim()); } catch (e) {}
+  location.reload();
+}
+function jvImp() {
+  var box = document.getElementById('jvimp-frame');
+  function apriDialog(ifr) {
+    try { var d = ifr.contentDocument; if (!d.getElementById('sdlg').open) d.getElementById('gear').click(); } catch (e) {}
+  }
+  if (box.querySelector('iframe')) apriDialog(box.firstChild);
+  else jvCarica(box, function(ifr) { ifr.addEventListener('load', function() { apriDialog(ifr); }); });
+}
+
 function jvToggle() {
   var f = document.getElementById('jv-frame'), b = document.getElementById('jv-open'), m = document.getElementById('jv-max');
   var apri = f.style.display === 'none';
   if (apri) {
-    f.innerHTML = '<iframe src="jarvis.html" title="Jarvis" allow="microphone; autoplay; clipboard-write"></iframe>';
+    jvCarica(f);
   } else {
     f.innerHTML = '';
     document.getElementById('jv-card').classList.remove('jv-full');
