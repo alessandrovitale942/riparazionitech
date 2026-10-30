@@ -101,16 +101,61 @@ dialog{border-radius:18px}dialog::backdrop{backdrop-filter:blur(8px)}
 #hud::after{content:"";position:absolute;inset:0;pointer-events:none;background:radial-gradient(circle at 50% 45%,transparent 45%,rgba(0,0,0,.7))}
 #cv3{display:none;position:absolute;inset:0;width:100%;height:100%}
 .h-list{position:relative;z-index:1;text-align:center;font:.72rem var(--mono);letter-spacing:.08em;color:#8fb3c7;line-height:1.8}
+
+/* ===== Look cinematografico ===== */
+body::before{content:"";position:fixed;inset:0;z-index:60;pointer-events:none;opacity:.08;mix-blend-mode:overlay;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");animation:grain .6s steps(3) infinite}
+@keyframes grain{33%{background-position:40px -30px}66%{background-position:-50px 20px}}
+body::after{content:"";position:fixed;inset:0;z-index:59;pointer-events:none;background:radial-gradient(ellipse at 50% 40%,transparent 50%,color-mix(in srgb,color-mix(in srgb,var(--bg),#000 60%) 85%,transparent)),repeating-linear-gradient(0deg,rgba(255,255,255,.022) 0 1px,transparent 1px 3px)}
+.brand{background:linear-gradient(180deg,#fff,var(--acc) 58%,color-mix(in srgb,var(--acc),#000 35%));-webkit-background-clip:text;background-clip:text;color:transparent;text-shadow:none;letter-spacing:.42em;filter:drop-shadow(0 0 14px color-mix(in srgb,var(--acc) 55%,transparent))}
+.top{position:relative;border-bottom:0}
+.top::after{content:"";position:absolute;left:0;right:0;bottom:0;height:2px;background:linear-gradient(90deg,transparent,var(--acc),transparent);box-shadow:0 0 18px var(--acc);animation:hs 5s ease-in-out infinite}
+@keyframes hs{50%{opacity:.35;transform:scaleX(.6)}}
+h2{text-shadow:0 0 14px color-mix(in srgb,var(--acc) 55%,transparent)}
+li{animation:rise .5s both}
+@keyframes rise{from{opacity:0;transform:translateY(10px)}}
+.act:hover,button.go:hover{box-shadow:0 0 22px -2px var(--acc)}
+.voice::before{display:block;content:"";position:absolute;left:-26px;top:50%;width:190px;height:2px;background:linear-gradient(90deg,transparent,color-mix(in srgb,var(--acc) 85%,transparent) 35%,#fff 50%,color-mix(in srgb,var(--acc) 85%,transparent) 65%,transparent);filter:blur(1px);opacity:.28;pointer-events:none;border:0}
+#mic{width:120px;height:120px;padding:0;overflow:visible}
+#mic svg.rx{width:100%;height:100%;overflow:visible;filter:drop-shadow(0 0 7px currentColor)}
+.rx *{transform-box:fill-box;transform-origin:center}
+.rx .r1{animation:rs 30s linear infinite}.rx .r2{animation:rsr 18s linear infinite}.rx .r3{animation:rs 11s linear infinite}.rx .sp{animation:rsr 40s linear infinite}.rx .co{animation:cp 2.4s ease-in-out infinite}
+#mic.live .r1{animation-duration:8s}#mic.live .r2{animation-duration:5s}#mic.live .r3{animation-duration:3s}#mic.live .co{animation-duration:.9s}
+#mic.boot svg.rx{animation:kick 1.7s cubic-bezier(.2,.8,.2,1)}
+#mic.boot .co{animation:flare 1.7s ease-out}
+@keyframes rs{to{transform:rotate(360deg)}}@keyframes rsr{to{transform:rotate(-360deg)}}
+@keyframes cp{50%{transform:scale(1.18);opacity:.7}}
+@keyframes kick{0%{transform:scale(.5) rotate(-200deg);opacity:0}55%{transform:scale(1.15) rotate(8deg);opacity:1}100%{transform:none}}
+@keyframes flare{0%{transform:scale(.2);filter:brightness(4)}45%{transform:scale(2)}100%{transform:scale(1);filter:none}}
+#boot{position:fixed;inset:0;z-index:100;display:grid;place-items:center;background:radial-gradient(circle,#03121c,#000 75%);opacity:0;visibility:hidden;pointer-events:none;transition:opacity .6s,visibility .6s;color:#7fe4ff;font:.8rem var(--mono);overflow:hidden}
+#boot.on{opacity:1;visibility:visible}
+#boot i{position:absolute;left:50%;top:50%;width:30vmin;height:30vmin;margin:-15vmin;border:2px solid rgba(63,208,255,.75);border-radius:50%;opacity:0}
+#boot.on i{animation:bring 2.4s ease-out forwards}
+#boot i:nth-child(2){animation-delay:.25s!important;border-style:dashed}
+#boot i:nth-child(3){animation-delay:.5s!important}
+#boot i.sc{border:0;border-radius:0;width:100%;height:2px;left:0;top:0;margin:0;background:linear-gradient(90deg,transparent,#3fd0ff,transparent);box-shadow:0 0 22px #3fd0ff}
+#boot.on i.sc{animation:bscan 2s ease-in-out .2s forwards}
+@keyframes bring{0%{transform:scale(.2);opacity:0}15%{opacity:.9}100%{transform:scale(3.2);opacity:0}}
+@keyframes bscan{0%{top:0;opacity:1}100%{top:100%;opacity:0}}
+#boot .bl{position:relative;letter-spacing:.2em;line-height:2.1}
+#boot .bl p{margin:0;opacity:0;animation:btx .4s forwards}
+#boot .bl p::before{content:"▸ "}
+#boot h1{position:absolute;bottom:14%;left:0;right:0;text-align:center;margin:0;font:700 clamp(2rem,9vw,4.5rem) var(--mono);letter-spacing:.5em;color:#d6f6ff;text-shadow:0 0 30px #3fd0ff;opacity:0;animation:btx .8s forwards}
+@keyframes btx{to{opacity:1}}
+#hud::before{content:"";position:absolute;left:50%;top:45%;width:min(92vw,92vh);aspect-ratio:1;translate:-50% -50%;border:1px dashed rgba(63,208,255,.22);border-radius:50%;animation:rs 90s linear infinite;pointer-events:none;z-index:1}
+#hud::after{z-index:0;background:linear-gradient(#000,transparent 7%,transparent 93%,#000),radial-gradient(circle at 50% 45%,transparent 45%,rgba(0,0,0,.7))}
+.h-stats b{text-shadow:0 0 14px #3fd0ff}
+@media (prefers-reduced-motion:reduce){#boot *,#mic *,body::before,li{animation:none!important}}
 </style>
 </head>
 <body>
+<div id="boot" aria-hidden="true"></div>
 <main>
 <header class="top"><div><div class="brand"><b id="bn">JARVIS</b><span>/ TECHANDBET</span></div><div class="sub">Jarvis × Nexus · gestione vocale 3D · v20</div></div><div class="sys"><i class="dot"></i><span id="clk"></span><button id="bgb" class="act" style="margin:0">Buongiorno</button><button id="hudb" class="act" style="margin:0">HUD 3D</button><button id="gear" class="act" style="margin:0">Impostazioni</button></div></header>
 
 <section class="voice">
-  <button id="mic" aria-label="Parla"><svg viewBox="0 0 24 24" width="30" height="30" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg></button>
+  <button id="mic" aria-label="Parla"><svg class="rx" viewBox="0 0 100 100" fill="none" stroke="currentColor" aria-hidden="true"><circle class="r1" cx="50" cy="50" r="46" stroke-width="1" stroke-dasharray="1.5 4.5" opacity=".8"/><circle class="r2" cx="50" cy="50" r="39" stroke-width="2" stroke-dasharray="26 7 9 7" opacity=".9"/><circle class="r3" cx="50" cy="50" r="31" stroke-width="3" stroke-dasharray="34 14" opacity=".95"/><g class="sp" stroke-width="2.2"><path d="M50 22V30M50 70V78M22 50H30M70 50H78M30 30l5.5 5.5M64.5 64.5L70 70M70 30l-5.5 5.5M35.5 64.5L30 70" opacity=".7"/></g><circle cx="50" cy="50" r="21" stroke-width="1" opacity=".6"/><circle class="co" cx="50" cy="50" r="13" fill="currentColor" stroke="none" opacity=".9"/><circle cx="50" cy="50" r="7" fill="#fff" stroke="none" opacity=".85"/></svg></button>
   <div style="flex:1;min-width:0">
-    <div id="heard">Tocca il microfono e parla</div>
+    <div id="heard">Tocca il reattore e parla</div>
     <div id="reply"></div>
     <div id="dbg" style="font:.68rem var(--mono);color:var(--mute);margin-top:6px;min-height:1em"></div>
     <label class="sw"><input type="checkbox" id="always"> Sempre in ascolto: rispondo se dici “<span id="wn">Jarvis</span>…”</label>
@@ -179,7 +224,6 @@ dialog{border-radius:18px}dialog::backdrop{backdrop-filter:blur(8px)}
 <label>Modello<select id="s-model"><option value="claude-sonnet-5-5">Sonnet 5.5 · più intelligente</option><option value="claude-haiku-4-5-20251001">Haiku 4.5 · più veloce ed economico</option></select></label>
 <h4>Aspetto</h4>
 <label><input type="checkbox" id="s-rp" style="width:auto"> Collega Jarvis a RepairPro (usa le sue riparazioni)</label>
-<button type="button" class="act" id="rp-diag" style="margin:6px 0">Verifica collegamento RepairPro</button>
 <label>Tema<select id="s-theme"><option value="auto">Automatico</option><option value="dark">Scuro</option><option value="light">Chiaro</option></select></label>
 <h4>Buongiorno</h4>
 <small>Di’ “buongiorno” o tocca il pulsante Buongiorno: leggo il resoconto.</small>
@@ -730,6 +774,21 @@ $('t-add').onclick=()=>{
 };
 $('s-x').onclick=()=>$('sdlg').close();
 
+/* ===== Avvio cinematografico ===== */
+let bootDone=false;
+function bootFx(){try{const A=new (window.AudioContext||window.webkitAudioContext)(),t=A.currentTime,o=A.createOscillator(),g=A.createGain(),f=A.createBiquadFilter();
+  o.type='sawtooth';o.frequency.setValueAtTime(70,t);o.frequency.exponentialRampToValueAtTime(900,t+1.4);f.type='lowpass';f.frequency.setValueAtTime(300,t);f.frequency.exponentialRampToValueAtTime(5000,t+1.4);
+  g.gain.setValueAtTime(.0001,t);g.gain.exponentialRampToValueAtTime(.1,t+1.2);g.gain.exponentialRampToValueAtTime(.0001,t+1.9);o.connect(f);f.connect(g);g.connect(A.destination);o.start(t);o.stop(t+2);
+  const o2=A.createOscillator(),g2=A.createGain();o2.frequency.value=1318;g2.gain.setValueAtTime(.0001,t+1.5);g2.gain.exponentialRampToValueAtTime(.12,t+1.55);g2.gain.exponentialRampToValueAtTime(.0001,t+2.6);o2.connect(g2);g2.connect(A.destination);o2.start(t+1.5);o2.stop(t+2.7);setTimeout(()=>A.close(),3000)}catch(e){}}
+function bootSeq(){
+  const b=$('boot'),L=['INIZIALIZZAZIONE NUCLEO NEURALE','CARICAMENTO MODULI VOCALI','COLLEGAMENTO RIPARAZIONI E MAGAZZINO','TUTTI I SISTEMI ONLINE'];
+  b.innerHTML='<i></i><i></i><i></i><i class="sc"></i><div class="bl"></div><h1 style="animation-delay:2.1s"></h1>';
+  L.forEach((x,k)=>{const p=document.createElement('p');p.textContent=x;p.style.animationDelay=(.35+k*.45)+'s';b.querySelector('.bl').appendChild(p)});
+  b.querySelector('h1').textContent=CFG.name.toUpperCase();
+  b.className='on';bootFx();setTimeout(()=>{b.className=''},3300);
+}
+$('mic').addEventListener('click',()=>{const m=$('mic');m.classList.remove('boot');void m.offsetWidth;m.classList.add('boot');setTimeout(()=>m.classList.remove('boot'),1800);if(!bootDone){bootDone=true;bootSeq()}});
+
 /* ===== Buongiorno ===== */
 let BG={meteo:1,rip:1,buy:1,sc:1,city:'Napoli'},bgId=0;
 try{Object.assign(BG,JSON.parse(localStorage.getItem('jarvis-bg')||'{}'))}catch(e){}
@@ -820,7 +879,7 @@ function nxFrame(t){
       if(a.ph>=1){a.ph=-1;a.sp.visible=false;if(Math.random()<Z[2])nxFire(a.to);else NX.ne[a.to].f=Math.max(NX.ne[a.to].f,.6);return}
       a.sp.visible=true;a.sp.position.copy(a.c.getPoint(a.ph))})});
   const w=$('cv3').clientWidth/($('cv3').clientHeight||1);
-  NX.G.rotation.y=t*.07;NX.G.rotation.x=Math.sin(t*.11)*.18;NX.cam.position.set(0,0,w<.8?15:11);NX.R.render(NX.sc,NX.cam);
+  NX.G.rotation.y=t*.07;NX.G.rotation.x=Math.sin(t*.11)*.18;NX.cam.position.set(Math.sin(t*.13)*1.3,Math.cos(t*.09)*.8,(w<.8?15:11)+Math.sin(t*.1)*.9);NX.cam.lookAt(0,0,0);NX.R.render(NX.sc,NX.cam);
 }
 
 /* Tono di voce */
@@ -920,15 +979,6 @@ try{navigator.storage&&navigator.storage.persist&&navigator.storage.persist()}ca
 if(RPon())rpLoad();
 $('f').onsubmit=e=>{e.preventDefault();const v=$('txt').value.trim();if(v){run(v);$('txt').value=''}};
 render();
-
-$('rp-diag').onclick=()=>{
-  let ml=null,rl=null;try{ml=JSON.parse(localStorage.getItem('rp_ml'))}catch(e){}try{rl=JSON.parse(localStorage.getItem('rp_rl'))}catch(e){}
-  const k=[];for(let i=0;i<localStorage.length;i++)k.push(localStorage.key(i));
-  const r=['Indirizzo di questa pagina:\n'+location.origin+location.pathname,'','Magazzino (rp_ml): '+(Array.isArray(ml)?ml.length+' articoli trovati':'NON trovato'),'Riparazioni (rp_rl): '+(Array.isArray(rl)?rl.length+' schede trovate':'NON trovate'),'','Chiavi presenti su questo indirizzo:\n'+(k.join(', ')||'nessuna')];
-  if(location.protocol==='file:')r.push('','Stai aprendo il file dal computer: i due programmi non condividono i dati. Caricali entrambi su GitHub Pages, sotto lo stesso indirizzo utente.github.io.');
-  else if(!Array.isArray(ml)&&!Array.isArray(rl))r.push('','RepairPro qui non ha salvato nulla: aprilo almeno una volta da questo stesso indirizzo (utente.github.io), poi riprova.');
-  alert(r.join('\n'));
-};
 </script>
 </body>
 </html>
