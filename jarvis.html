@@ -1,0 +1,934 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Jarvis · Techandbet</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<style>
+:root{--bg:#eef3f7;--panel:#fff;--panel2:#f3f7fa;--ink:#0f2230;--mute:#58717f;--line:#c9d7e0;--acc:#0a74a8;--on:#fff;--warn:#d98f00;--r:#d32f3f;--y:#d99a00;--g:#1f9d6b;--grid:rgba(10,116,168,.07);
+--mono:ui-monospace,"SF Mono",Consolas,"Cascadia Mono",monospace;
+box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#060e16;--panel:#0b1824;--panel2:#0f2030;--ink:#dcecf5;--mute:#7f9aab;--line:#1c3850;--acc:#3fd0ff;--on:#02222e;--warn:#ffb020;--r:#ff5468;--y:#ffc233;--g:#38d996;--grid:rgba(63,208,255,.05)}}
+:root[data-theme="dark"]{--bg:#060e16;--panel:#0b1824;--panel2:#0f2030;--ink:#dcecf5;--mute:#7f9aab;--line:#1c3850;--acc:#3fd0ff;--on:#02222e;--warn:#ffb020;--r:#ff5468;--y:#ffc233;--g:#38d996;--grid:rgba(63,208,255,.05)}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);background-size:28px 28px;color:var(--ink);font:15px/1.45 Bahnschrift,"Segoe UI",system-ui,sans-serif}
+main{max-width:720px;margin:0 auto;padding:16px}
+.top{display:flex;justify-content:space-between;align-items:flex-end;margin:4px 0 16px;padding-bottom:10px;border-bottom:1px solid var(--line)}
+.brand{font:700 1.5rem/1 var(--mono);letter-spacing:.28em;color:var(--acc)}
+.brand span{font-size:.7rem;letter-spacing:.2em;color:var(--mute);margin-left:10px}
+.sub{font:.7rem var(--mono);letter-spacing:.14em;text-transform:uppercase;color:var(--mute);margin-top:6px}
+.sys{font:.8rem var(--mono);color:var(--mute);display:flex;gap:8px;align-items:center}
+.dot{width:8px;height:8px;border-radius:50%;background:var(--g);box-shadow:0 0 8px var(--g)}
+.voice{position:relative;background:var(--panel);border:1px solid var(--line);padding:18px;display:flex;gap:16px;align-items:center}
+.voice::before,.voice::after{content:"";position:absolute;width:14px;height:14px;border:2px solid var(--acc)}
+.voice::before{top:-1px;left:-1px;border-right:0;border-bottom:0}
+.voice::after{bottom:-1px;right:-1px;border-left:0;border-top:0}
+#mic{flex:none;width:76px;height:76px;border-radius:50%;border:2px solid var(--acc);background:radial-gradient(circle,var(--panel2),var(--panel));color:var(--acc);cursor:pointer;display:grid;place-items:center;box-shadow:0 0 0 6px var(--panel2),0 0 0 7px var(--line)}
+#mic.live{border-color:var(--warn);color:var(--warn);animation:p 1.3s infinite}
+@keyframes p{50%{box-shadow:0 0 0 10px transparent,0 0 0 11px var(--warn)}}
+@media (prefers-reduced-motion:reduce){#mic.live{animation:none}}
+#heard{font-weight:600;min-height:1.4em}
+#reply{color:var(--mute);min-height:1.4em;white-space:pre-wrap;font-size:.92rem}
+label.sw{display:flex;gap:8px;align-items:center;margin-top:10px;color:var(--mute);font:.72rem var(--mono);letter-spacing:.04em}
+#f,#kf{display:flex;gap:8px;margin:12px 0 8px}
+input[type=text],input[type=password],textarea,select{width:100%;min-width:0;padding:11px 12px;border:1px solid var(--line);background:var(--panel);color:var(--ink);font:inherit;border-radius:3px}
+#f input,#kf input{flex:1}
+button.go{padding:0 18px;border:1px solid var(--acc);background:var(--acc);color:var(--on);font:700 .8rem var(--mono);letter-spacing:.1em;text-transform:uppercase;border-radius:3px}
+:focus-visible{outline:2px solid var(--warn);outline-offset:2px}
+h2{display:flex;align-items:center;gap:12px;font:700 .75rem var(--mono);letter-spacing:.22em;text-transform:uppercase;color:var(--acc);margin:24px 0 10px}
+h2::after{content:"";flex:1;height:1px;background:var(--line)}
+ul{list-style:none;margin:0;padding:0}
+li{background:var(--panel);border:1px solid var(--line);padding:11px 12px;margin-bottom:8px;display:flex;gap:10px;align-items:flex-start}
+li .t{flex:1;min-width:0;font-weight:600}
+li small{display:block;color:var(--mute);font-weight:400;font-size:.82rem}
+li.rep{border-left:4px solid var(--p)}
+li.rosso{--p:var(--r)}li.giallo{--p:var(--y)}li.verde{--p:var(--g)}
+#stats{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px}
+.chip{font:.72rem var(--mono);letter-spacing:.06em;text-transform:uppercase;border:1px solid var(--line);background:var(--panel);padding:4px 10px;display:flex;gap:7px;align-items:center}
+.chip::before{content:"";width:8px;height:8px;border-radius:50%;background:var(--p)}
+.chip.rosso{--p:var(--r)}.chip.giallo{--p:var(--y)}.chip.verde{--p:var(--g)}
+.st{border:1px solid var(--line);background:none;color:var(--ink);padding:4px 9px;font:.68rem var(--mono);letter-spacing:.08em;text-transform:uppercase;border-radius:2px}
+.st.pronta{background:var(--g);color:#04170f;border-color:var(--g)}
+.st.consegnata{color:var(--mute)}
+.x{border:0;background:none;color:var(--mute);font-size:1.3rem;padding:2px 8px}
+.empty{color:var(--mute);padding:6px 2px;font-size:.9rem}
+.sol{margin-top:8px;padding:8px 10px;background:var(--panel2);border-left:2px solid var(--acc);white-space:pre-wrap;font:400 .85rem/1.45 var(--mono);color:var(--ink)}
+.act{border:1px solid var(--line);background:none;color:var(--acc);padding:4px 9px;font:.68rem var(--mono);letter-spacing:.08em;text-transform:uppercase;margin:8px 6px 0 0;border-radius:2px}
+details{margin-top:18px;color:var(--mute);font-size:.88rem}
+summary{font:.72rem var(--mono);letter-spacing:.12em;text-transform:uppercase;cursor:pointer}
+dialog{border:1px solid var(--acc);background:var(--panel);color:var(--ink);width:min(92vw,460px);padding:18px;border-radius:4px}
+dialog::backdrop{background:rgba(0,0,0,.65)}
+dialog h3{margin:0 0 6px;font:700 .8rem var(--mono);letter-spacing:.2em;text-transform:uppercase;color:var(--acc)}
+dialog label{display:block;margin-top:10px;font:.68rem var(--mono);letter-spacing:.1em;text-transform:uppercase;color:var(--mute)}
+dialog label>*{margin-top:4px;text-transform:none;letter-spacing:0;font-family:inherit}
+dialog .row{display:flex;gap:8px;justify-content:flex-end;margin-top:16px;position:sticky;bottom:-18px;background:var(--panel);padding:10px 0}
+dialog .row button{padding:9px 16px}
+dialog{max-height:88vh;overflow:auto}
+dialog h4{margin:18px 0 0;padding-top:10px;border-top:1px solid var(--line);font:700 .7rem var(--mono);letter-spacing:.18em;text-transform:uppercase;color:var(--acc)}
+dialog output{float:right;color:var(--ink)}
+dialog input[type=range]{width:100%;padding:0;accent-color:var(--acc)}
+dialog li{padding:8px 10px;font-size:.88rem;align-items:center}
+.sys{flex-wrap:wrap;justify-content:flex-end}
+#hud{position:fixed;inset:0;z-index:50;background:radial-gradient(circle at 50% 45%,#07182a,#02060b 70%);color:#dcecf5;display:flex;flex-direction:column;justify-content:space-between;padding:calc(16px + env(safe-area-inset-top,0px)) 16px calc(16px + env(safe-area-inset-bottom,0px))}
+#hud[hidden]{display:none}
+#cv{position:absolute;inset:0;width:100%;height:100%}
+.h-top,.h-mid,.h-stats{position:relative;z-index:1}
+.h-top{display:flex;justify-content:space-between;align-items:center;font:700 .8rem var(--mono);letter-spacing:.3em;color:#3fd0ff}
+#h-x{color:#3fd0ff;border-color:#1c3850}
+.h-mid{text-align:center;padding:0 8px}
+#h-heard{font:600 1.05rem/1.3 Bahnschrift,"Segoe UI",system-ui,sans-serif;min-height:1.4em}
+#h-reply{margin-top:8px;color:#8fb3c7;font-size:.9rem;white-space:pre-wrap;max-height:7.5em;overflow:hidden}
+.h-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;text-align:center}
+#h-know{margin-top:14px;font:.65rem var(--mono);letter-spacing:.12em;text-transform:uppercase;color:#5f8ba3}
+.h-stats div{border-top:1px solid #1c3850;padding-top:8px}
+.h-stats b{display:block;font:700 1.5rem var(--mono);color:#3fd0ff}
+.h-stats span{font:.6rem var(--mono);letter-spacing:.14em;text-transform:uppercase;color:#7f9aab}
+
+/* Nuova grafica */
+body{background:radial-gradient(1100px 650px at 50% -8%,color-mix(in srgb,var(--acc) 15%,transparent),transparent 62%),radial-gradient(800px 600px at 100% 100%,color-mix(in srgb,var(--acc) 9%,transparent),transparent 55%),var(--bg);background-attachment:fixed}
+main{max-width:800px}
+.brand{text-shadow:0 0 20px color-mix(in srgb,var(--acc) 55%,transparent)}
+.voice,li,details,dialog{background:linear-gradient(160deg,color-mix(in srgb,var(--panel) 90%,#fff 10%),var(--panel));border-color:color-mix(in srgb,var(--acc) 24%,var(--line));box-shadow:0 1px 0 rgba(255,255,255,.07) inset,0 14px 32px -16px rgba(0,0,0,.6)}
+.voice{border-radius:18px;padding:22px}.voice::before,.voice::after{display:none}
+#mic{width:94px;height:94px;border:0;background:radial-gradient(circle at 35% 26%,color-mix(in srgb,var(--acc) 34%,var(--panel2)),var(--panel) 64%);box-shadow:0 0 0 2px color-mix(in srgb,var(--acc) 60%,transparent),0 0 0 8px var(--panel2),0 0 0 9px var(--line),0 0 40px -4px color-mix(in srgb,var(--acc) 65%,transparent),inset 0 -9px 16px rgba(0,0,0,.35),inset 0 6px 12px rgba(255,255,255,.14)}
+li{border-radius:12px}li.rep{border-left-width:5px}
+.chip,.st,.act{border-radius:999px}
+button.go{border-radius:10px;box-shadow:0 8px 20px -8px var(--acc)}
+input[type=text],input[type=password],textarea,select{border-radius:10px}
+dialog{border-radius:18px}dialog::backdrop{backdrop-filter:blur(8px)}
+#hud{background:radial-gradient(circle at 50% 45%,#06141f,#010306 72%)}
+#hud::after{content:"";position:absolute;inset:0;pointer-events:none;background:radial-gradient(circle at 50% 45%,transparent 45%,rgba(0,0,0,.7))}
+#cv3{display:none;position:absolute;inset:0;width:100%;height:100%}
+.h-list{position:relative;z-index:1;text-align:center;font:.72rem var(--mono);letter-spacing:.08em;color:#8fb3c7;line-height:1.8}
+</style>
+</head>
+<body>
+<main>
+<header class="top"><div><div class="brand"><b id="bn">JARVIS</b><span>/ TECHANDBET</span></div><div class="sub">Jarvis × Nexus · gestione vocale 3D · v20</div></div><div class="sys"><i class="dot"></i><span id="clk"></span><button id="bgb" class="act" style="margin:0">Buongiorno</button><button id="hudb" class="act" style="margin:0">HUD 3D</button><button id="gear" class="act" style="margin:0">Impostazioni</button></div></header>
+
+<section class="voice">
+  <button id="mic" aria-label="Parla"><svg viewBox="0 0 24 24" width="30" height="30" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg></button>
+  <div style="flex:1;min-width:0">
+    <div id="heard">Tocca il microfono e parla</div>
+    <div id="reply"></div>
+    <div id="dbg" style="font:.68rem var(--mono);color:var(--mute);margin-top:6px;min-height:1em"></div>
+    <label class="sw"><input type="checkbox" id="always"> Sempre in ascolto: rispondo se dici “<span id="wn">Jarvis</span>…”</label>
+    <label class="sw">Tono di voce <select id="tone" style="width:auto;padding:6px 8px" aria-label="Tono di voce"></select></label>
+  </div>
+</section>
+
+<form id="f"><input type="text" id="txt" placeholder="Oppure scrivi un comando" autocomplete="off"><button class="go">Invia</button></form>
+
+<h2>Da ordinare</h2><ul id="buy"></ul>
+<h2>Riparazioni</h2><div id="stats"></div><ul id="rep"></ul>
+<h2>Magazzino</h2><div id="magj"></div>
+
+<details><summary>Comandi disponibili</summary>
+<p>“Buongiorno” (resoconto) / “Stop”<br>“Timer 10 minuti” / “Che ore sono?”<br>“Preventivo per Luca” / “Avvisa Luca” (WhatsApp) / “Esporta backup”<br>“Aggiungi display iPhone 12 alla lista”<br>
+“Togli display iPhone 12”<br>
+“Cosa devo ordinare?”<br>
+“Nuova riparazione cliente Mario dispositivo PS5 problema HDMI”<br>
+“Mario è pronto”<br>
+“Leggi le riparazioni”<br>
+“Nuova scheda cliente Luca dispositivo iPhone 13 problema non si accende urgenza rossa” (verde = può aspettare, la scheda nasce anche su RepairPro)<br>
+“Metti in ordine le riparazioni”<br>
+“Luca è urgente”<br>
+“Soluzioni per Luca”<br>
+“Crea scheda cliente per Luca”<br>
+“Com’è andata la giornata?” e qualsiasi domanda<br>“Impara: quando ti dico X rispondi Y”<br>“Modalità HUD” / “Chiudi HUD”<br>“Manda Luca su RepairPro”<br>“Quanti display iPhone 12 ho?” / “Ho usato 1 batteria iPhone 11” / “Aggiungi 3 display iPhone 12 al magazzino”<br>“Cosa è sotto scorta?” / “Metti i pezzi sotto scorta nella lista acquisti” / “Crea articolo cavo HDMI”<br>“Cambia tono in calmo” / “voce più veloce” / “voce più profonda”</p></details>
+<dialog id="dlg"><form id="df">
+<h3>Scheda cliente</h3>
+<label>Cliente<input type="text" id="e-c"></label>
+<label>Telefono<input type="text" id="e-tel" inputmode="tel"></label>
+<label>Dispositivo<input type="text" id="e-d"></label>
+<label>Problema<input type="text" id="e-p"></label>
+<label>Note<textarea id="e-n" rows="3"></textarea></label>
+<label>Priorità<select id="e-pr"><option value="rosso">Rosso · urgente</option><option value="giallo">Giallo · normale</option><option value="verde">Verde · può aspettare</option></select></label>
+<label>Stato<select id="e-s"><option>in corso</option><option>pronta</option><option>consegnata</option></select></label>
+<div class="row"><button type="button" class="act" id="e-x" style="margin:0">Annulla</button><button class="go">Salva</button></div>
+</form></dialog>
+<dialog id="sdlg"><form id="sf">
+<h3>Impostazioni</h3>
+<h4>Identità</h4>
+<label>Nome dell’assistente<input type="text" id="s-name"></label>
+<label>Varianti di pronuncia (separate da virgola)<input type="text" id="s-alias" placeholder="es. giarvis, garvis"></label>
+<label>Come ti chiama<input type="text" id="s-call"></label>
+<label>Stile<select id="s-style"><option value="amichevole">Amichevole</option><option value="formale">Formale</option><option value="friday">F.R.I.D.A.Y. · diretta e ironica</option><option value="ironico">Ironico (maggiordomo)</option></select></label>
+<label>Istruzioni extra per l’AI<textarea id="s-extra" rows="2" placeholder="es. Rispondi sempre in modo molto breve"></textarea></label>
+<h4>Voce</h4>
+<label>Voce<select id="s-voice"></select></label>
+<label>Velocità <output id="o-rate"></output><input type="range" id="s-rate" min="0.6" max="1.5" step="0.05"></label>
+<label>Tono <output id="o-pitch"></output><input type="range" id="s-pitch" min="0.5" max="1.5" step="0.05"></label>
+<button type="button" class="act" id="s-test" style="margin:8px 0 0">Prova voce</button>
+<h4>Voce premium (ElevenLabs)</h4>
+<small>Usa una voce neurale o una voce clonata. Serve un account ElevenLabs: si paga in base ai caratteri letti.</small>
+<label><input type="checkbox" id="el-on" style="width:auto"> Usa la voce premium</label>
+<label>Chiave API ElevenLabs<input type="password" id="el-key" placeholder="vuoto = non cambiarla" autocomplete="off"></label>
+<label>ID della voce<input type="text" id="el-vid" autocomplete="off"></label>
+<label>Qualità<select id="el-model"><option value="eleven_flash_v2_5">Flash · veloce, costa circa la metà</option><option value="eleven_multilingual_v2">Multilingual v2 · più espressiva</option></select></label>
+<label><input type="checkbox" id="el-hud" style="width:auto"> Voce premium solo in modalità HUD (risparmia crediti)</label>
+<small id="el-use"></small>
+<h4>Intelligenza artificiale</h4>
+<label>Motore<select id="s-prov"><option value="claude">Claude · a pagamento, più preciso</option><option value="gemini">Gemini · ha un piano gratuito</option></select></label>
+<label>Chiave API<input type="password" id="key" placeholder="sk-ant-… (vuoto = non cambiarla)" autocomplete="off"></label>
+<small id="kst"></small>
+<label>Chiave Gemini<input type="password" id="gkey" placeholder="vuoto = non cambiarla" autocomplete="off"></label>
+<label>Modello Gemini<input type="text" id="gmodel" autocomplete="off"></label>
+<small>Con il piano gratuito Google può usare i testi inviati per migliorare i suoi modelli. Per questo, con Gemini, i nomi dei clienti diventano “Cliente 1, 2…” prima dell’invio e vengono rimessi nella risposta.</small>
+<label>Modello<select id="s-model"><option value="claude-sonnet-5-5">Sonnet 5.5 · più intelligente</option><option value="claude-haiku-4-5-20251001">Haiku 4.5 · più veloce ed economico</option></select></label>
+<h4>Aspetto</h4>
+<label><input type="checkbox" id="s-rp" style="width:auto"> Collega Jarvis a RepairPro (usa le sue riparazioni)</label>
+<button type="button" class="act" id="rp-diag" style="margin:6px 0">Verifica collegamento RepairPro</button>
+<label>Tema<select id="s-theme"><option value="auto">Automatico</option><option value="dark">Scuro</option><option value="light">Chiaro</option></select></label>
+<h4>Buongiorno</h4>
+<small>Di’ “buongiorno” o tocca il pulsante Buongiorno: leggo il resoconto.</small>
+<label><input type="checkbox" id="bg-meteo" style="width:auto"> Meteo</label>
+<label><input type="checkbox" id="bg-rip" style="width:auto"> Riparazioni aperte, urgenti e pronte</label>
+<label><input type="checkbox" id="bg-buy" style="width:auto"> Lista da ordinare</label>
+<label><input type="checkbox" id="bg-sc" style="width:auto"> Articoli sotto scorta (serve RepairPro)</label>
+<label>Città per il meteo<input type="text" id="bg-city" autocomplete="off"></label>
+<h4>Backup dati</h4><small>Esporta riparazioni, lista e impostazioni (le chiavi API non vengono incluse).</small>
+<div class="row" style="justify-content:flex-start;margin-top:8px"><button type="button" class="act" id="bk-out" style="margin:0">Esporta</button><label class="act" style="margin:0;cursor:pointer">Importa<input type="file" id="bk-in" accept="application/json" hidden></label></div>
+<h4>Risposte insegnate</h4>
+<small>Se la tua frase contiene queste parole, rispondo così. I comandi hanno la precedenza.</small>
+<ul id="tl"></ul>
+<label>Quando dico<input type="text" id="t-q"></label>
+<label>Rispondi<input type="text" id="t-a"></label>
+<button type="button" class="act" id="t-add" style="margin:8px 0 0">Aggiungi</button>
+<small id="sv" style="display:block;margin-top:10px;color:var(--acc);min-height:1.2em"></small>
+<div class="row"><button type="button" class="act" id="s-x" style="margin:0">Chiudi</button><button type="button" class="go" id="s-save">Salva e chiudi</button></div>
+</form></dialog>
+</main>
+<div id="hud" hidden>
+<canvas id="cv3"></canvas><canvas id="cv"></canvas>
+<div class="h-top"><span id="h-hello"></span><button class="act" id="h-x" style="margin:0">Esci</button></div>
+<div class="h-mid"><div id="h-heard"></div><div id="h-reply"></div><div id="h-know"></div></div>
+<div class="h-list" id="h-list"></div>
+<div class="h-stats" id="h-stats"></div>
+</div>
+
+<script>
+const $=id=>document.getElementById(id);
+let S={buy:[],rep:[]};
+try{const r=localStorage.getItem('jarvis-negozio');if(r)S=JSON.parse(r)}catch(e){}
+const save=()=>{try{localStorage.setItem('jarvis-negozio',JSON.stringify(RPon()?{...S,rep:[]}:S))}catch(e){}try{rpSave()}catch(e){}};
+const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,5);
+const cap=s=>s.charAt(0).toUpperCase()+s.slice(1);
+const NEXT={'in corso':'pronta',pronta:'consegnata',consegnata:'in corso'};
+const MODEL='claude-sonnet-5-5';
+const STILI={friday:'Tono diretto, sicuro e un filo ironico, da assistente alla F.R.I.D.A.Y.; chiamalo “capo” ogni tanto.',formale:'Tono formale e professionale, dai del lei.',amichevole:'Tono amichevole e diretto, dai del tu.',ironico:'Tono sobrio con ironia leggera, da maggiordomo britannico; chiamalo “signore” ogni tanto.'};
+let CFG={name:'Jarvis',alias:'',call:'Alessandro',style:'amichevole',voice:'',rate:1,pitch:1,model:MODEL,theme:'auto',extra:'',provider:'claude',gkey:'',gmodel:'gemini-3.1-flash-lite-preview'};
+try{Object.assign(CFG,JSON.parse(localStorage.getItem('jarvis-cfg')||'{}'))}catch(e){}
+S.teach=S.teach||[];
+let EL={key:'',vid:'',on:false,hudOnly:false,model:'eleven_flash_v2_5',used:0,mo:''};
+try{Object.assign(EL,JSON.parse(localStorage.getItem('jarvis-el')||'{}'))}catch(e){}
+let wakeStart,wakeAny;
+const esc=x=>x.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');
+function applyCfg(){
+  const names=[CFG.name,...CFG.alias.split(',')].map(x=>x.trim()).filter(Boolean);
+  if(!names.length)names.push('Jarvis');
+  const W=names.map(esc).concat(CFG.name.trim().toLowerCase()==='jarvis'?['(?:j|g|gi|ch|z|dj)[ae]r[vb](?:ai|[ie])s?']:[]).join('|');
+  wakeStart=new RegExp('^(?:(?:ehi|ok|ciao|hey)\\s+)?(?:'+W+')[,:]?\\s*','i');
+  wakeAny=new RegExp('(?:'+W+')','i');
+  document.documentElement.dataset.theme=CFG.theme==='auto'?'':CFG.theme;
+  $('bn').textContent=CFG.name.toUpperCase();$('wn').textContent=CFG.name;document.title=CFG.name+' · Techandbet';
+}
+const PR={rosso:0,giallo:1,verde:2},PRN={rosso:'URGENTE',giallo:'normale',verde:'può aspettare'};
+let KEY='',hist=[],talking=false;try{KEY=localStorage.getItem('jarvis-key')||''}catch(e){}
+const prKey=x=>/non urg|verde|aspett/.test(x)?'verde':/ross|urgen/.test(x)?'rosso':'giallo';
+const sorted=()=>[...S.rep].sort((a,b)=>(a.s==='consegnata')-(b.s==='consegnata')||PR[a.pr||'giallo']-PR[b.pr||'giallo']);
+const findRep=q=>{q=q.replace(/^(la )?riparazione di |^di /,'').trim();return S.rep.find(r=>r.c.toLowerCase().includes(q)||q.includes(r.c.toLowerCase()))};
+
+let spk=0,talkTimer,awakeUntil=0;
+let curAudio=null;
+const CACHE={};
+async function cloud(sp){
+  const ck=EL.vid+'|'+EL.model+'|'+sp;
+  if(CACHE[ck])return new Audio(CACHE[ck]);
+  const r=await fetch('https://api.elevenlabs.io/v1/text-to-speech/'+encodeURIComponent(EL.vid)+'?output_format=mp3_44100_64',{method:'POST',headers:{'xi-api-key':EL.key,'content-type':'application/json'},body:JSON.stringify({text:sp,model_id:EL.model||'eleven_flash_v2_5'})});
+  if(!r.ok){let m='errore '+r.status;try{const j=await r.json();const d=j.detail;m=typeof d==='string'?d:(d&&d.message)||m}catch(e){}throw new Error(m)}
+  const url=URL.createObjectURL(await r.blob());CACHE[ck]=url;
+  const mo=new Date().toISOString().slice(0,7);if(EL.mo!==mo){EL.mo=mo;EL.used=0}
+  EL.used+=sp.length;try{localStorage.setItem('jarvis-el',JSON.stringify(EL))}catch(e){}
+  return new Audio(url);
+}
+function speak(t){
+  $('reply').textContent=t;
+  const my=++spk,done=()=>{if(my!==spk)return;clearTimeout(talkTimer);setTimeout(()=>{if(my!==spk)return;talking=false;awakeUntil=Date.now()+8000},600)};
+  try{speechSynthesis.cancel()}catch(e){}
+  try{if(curAudio){curAudio.pause();curAudio=null}}catch(e){}
+  const prem=EL.on&&EL.key&&EL.vid&&(!EL.hudOnly||hudOn),sp=t.slice(0,prem?250:350);
+  const local=()=>{
+    try{
+      const u=new SpeechSynthesisUtterance(sp);
+      talking=true;clearTimeout(talkTimer);talkTimer=setTimeout(done,Math.min(1500+sp.length*70,15000));
+      u.onend=u.onerror=done;u.lang='it-IT';
+      const vv=speechSynthesis.getVoices().find(v=>v.voiceURI===CFG.voice);if(vv){u.voice=vv;u.lang=vv.lang}
+      u.rate=CFG.rate;u.pitch=CFG.pitch;speechSynthesis.speak(u);
+    }catch(e){talking=false}
+  };
+  if(prem){
+    talking=true;clearTimeout(talkTimer);talkTimer=setTimeout(done,25000);
+    cloud(sp).then(a=>{
+      if(my!==spk)return;
+      curAudio=a;a.onended=a.onerror=done;
+      a.play().catch(()=>{if(my===spk)local()});
+    }).catch(e=>{if(my!==spk)return;$('reply').textContent=t+'\n(Voce premium non disponibile: '+e.message+'. Uso la voce del dispositivo.)';local()});
+  }else local();
+}
+
+function render(){
+  try{renderMagJ()}catch(e){}
+  const b=$('buy');b.textContent='';
+  if(!S.buy.length){const d=document.createElement('div');d.className='empty';d.textContent='Niente da ordinare. Di’ “aggiungi…” per iniziare.';b.appendChild(d)}
+  S.buy.forEach(i=>{
+    const li=document.createElement('li'),t=document.createElement('span'),x=document.createElement('button');
+    t.className='t';t.textContent=cap(i.t);x.className='x';x.textContent='×';x.setAttribute('aria-label','Rimuovi '+i.t);
+    x.onclick=()=>{S.buy=S.buy.filter(k=>k.id!==i.id);save();render()};
+    const am=document.createElement('a');am.className='act';am.style.cssText='margin:0;text-decoration:none';am.textContent='Amazon';am.target='_blank';am.rel='noopener';am.href='https://www.amazon.it/s?k='+encodeURIComponent(i.t);
+    li.append(t,am,x);b.appendChild(li);
+  });
+  const r=$('rep');r.textContent='';
+  {const o=S.rep.filter(i=>i.s!=='consegnata'),n=k=>o.filter(i=>(i.pr||'giallo')===k).length;
+  $('stats').innerHTML='<span class="chip rosso">'+n('rosso')+' urgenti</span><span class="chip giallo">'+n('giallo')+' normali</span><span class="chip verde">'+n('verde')+' in attesa</span>'+(RPon()?'<span class="chip verde">RepairPro collegato</span>':'<span class="chip giallo">RepairPro non collegato</span>')}
+  if(!S.rep.length){const d=document.createElement('div');d.className='empty';d.textContent='Nessuna riparazione. Di’ “nuova riparazione…”.';r.appendChild(d)}
+  sorted().forEach(i=>{
+    const li=document.createElement('li'),t=document.createElement('span'),s=document.createElement('small'),st=document.createElement('button'),x=document.createElement('button');
+    li.className='rep '+(i.pr||'giallo');
+    t.className='t';t.textContent=cap(i.c)+' · '+(i.d||'dispositivo n/d');s.textContent=(i.p||'problema n/d')+' · '+PRN[i.pr||'giallo'];t.appendChild(s);
+    if(i.tel||i.note){const n=document.createElement('small');n.textContent=[i.tel,i.note].filter(Boolean).join(' · ');t.appendChild(n)}
+    if(i.sol){const z=document.createElement('div');z.className='sol';z.textContent=i.sol;t.appendChild(z)}
+    if(i.prev){const z=document.createElement('div');z.className='sol';z.textContent='PREVENTIVO\n'+i.prev;t.appendChild(z)}
+    const a=(txt,f)=>{const b=document.createElement('button');b.className='act';b.textContent=txt;b.onclick=f;t.appendChild(b)};
+    a('Priorità',()=>{i.pr={giallo:'rosso',rosso:'verde',verde:'giallo'}[i.pr||'giallo'];save();render()});
+    a('Modifica',()=>edit(i));
+    a('Soluzioni',()=>solve(i));
+    a('Scheda cliente',()=>scheda(i));a('Preventivo',()=>quote(i));a('WhatsApp',()=>wa(i));
+    if(!RPon())a('→ RepairPro',()=>toRP(i));
+    st.className='st '+(i.s==='in corso'?'':i.s);st.textContent=i.s;st.onclick=()=>{i.s=NEXT[i.s];i.upd=Date.now();save();render()};
+    x.className='x';x.textContent='×';x.setAttribute('aria-label','Rimuovi riparazione di '+i.c);
+    x.onclick=()=>{if(RPon()){speak('Per eliminare una riparazione usa RepairPro.');return}S.rep=S.rep.filter(k=>k.id!==i.id);save();render()};
+    li.append(t,st,x);r.appendChild(li);
+  });
+}
+
+async function run(raw){
+  let t=raw.toLowerCase().trim().replace(/[.!?]+$/,'').replace(wakeStart,'');
+  $('heard').textContent='“'+raw+'”';
+  if(!t)return speak('Sì, dimmi.');
+  if(pendMag){
+    const w={primo:1,uno:1,'1':1,secondo:2,due:2,'2':2,terzo:3,tre:3,'3':3,quarto:4,quattro:4,'4':4,quinto:5,cinque:5,'5':5},p=pendMag;pendMag=null;
+    if(/^(annulla|niente|lascia)/.test(t))return speak('Va bene, annullato.');
+    const mm=t.match(/^(?:(?:il|la|lo|numero|quello)\s+)*(\d|primo|secondo|terzo|quarto|quinto|uno|due|tre|quattro|cinque)\b/);
+    if(mm&&p.list[w[mm[1]]-1]!==undefined)return magApply(p.op,p.list[w[mm[1]]-1],p.n);
+  }
+  if(pendBuy){
+    const d=pendBuy;pendBuy=null;
+    if(t.length<=25&&/^(s[ìi]|ok|certo|va bene|aggiungilo|aggiungi pure)(?:\s|$)/.test(t)){addBuy(d);return speak('Aggiunto alla lista acquisti: '+d+'.')}
+    if(/^no\b/.test(t))return speak('Va bene.');
+  }
+  let m;
+  {let mm;
+  if(mm=t.match(/timer\s+(?:di\s+)?(\d+)\s*(second|minut|or)/)){const n=+mm[1],L={second:'secondi',minut:'minuti',or:'ore'}[mm[2]];setTimeout(()=>speak('Timer da '+n+' '+L+' scaduto.'),n*(mm[2]==='second'?1e3:mm[2]==='minut'?6e4:36e5));return speak('Timer da '+n+' '+L+' avviato.')}
+  if(/che ore sono|che ora è|che giorno è|che data/.test(t)){const d=new Date();return speak(/giorno|data/.test(t)?'Oggi è '+d.toLocaleDateString('it-IT',{weekday:'long',day:'numeric',month:'long'})+'.':'Sono le '+d.toLocaleTimeString('it-IT',{hour:'2-digit',minute:'2-digit'})+'.')}
+  if(mm=t.match(/(?:preventivo|stima)\s+(?:per |di |a )*(.+)$/)){const i=findRep(mm[1]);if(i)return quote(i)}
+  if(mm=t.match(/^(?:avvisa|manda (?:un )?(?:messaggio|whatsapp) a|scrivi a)\s+(.+)$/)){const i=findRep(mm[1]);if(i)return wa(i)}
+  if(/(esporta|scarica) (il )?backup|salva (tutto|i dati)/.test(t)){backup();return speak('Backup scaricato.')}
+  if(/^(?:buongiorno|buon pomeriggio|buonasera|buondì)$|resoconto|briefing/.test(t))return buongiorno();
+  if(/^(?:stop|basta|fermati|silenzio|zitto)$/.test(t)){bgStop();spk++;talking=false;try{speechSynthesis.cancel()}catch(e){}try{if(curAudio){curAudio.pause();curAudio=null}}catch(e){}return}}
+  if(/^(cosa|che cosa) (devo|dobbiamo) (ordinare|comprare)|^leggi (la )?lista/.test(t)){
+    return speak(S.buy.length?'Da ordinare: '+S.buy.map(i=>i.t).join(', '):'Non c’è niente da ordinare.');
+  }
+  if(/^(leggi|elenca|quali sono) (le )?riparazioni|laboratorio/.test(t)){
+    const a=S.rep.filter(i=>i.s!=='consegnata');
+    return speak(a.length?a.length+' riparazioni aperte: '+a.map(i=>i.c+', '+(i.d||'')+', '+i.s).join('; '):'Nessuna riparazione aperta.');
+  }
+  if(m=t.match(/^(?:crea\s+)?nuov[ao]\s+(?:riparazione|scheda(?:\s+cliente)?)[:,]?\s*(.*)$/)){
+    let rest=m[1];let c,d,p,pr='giallo';
+    const pm=rest.match(/(?:urgenza|priorità|codice)\s+(rosso|rossa|giallo|gialla|verde)|\b(urgente|può aspettare|non urgente)\b/);
+    if(pm){pr=prKey(pm[1]||pm[2]);rest=rest.replace(pm[0],' ').replace(/\s+/g,' ').trim()}
+    const k=rest.match(/(?:cliente\s+)?(.+?)(?:\s+dispositivo\s+(.+?))?(?:\s+problema\s+(.+))?$/);
+    if(/cliente|dispositivo|problema/.test(rest)){
+      c=(rest.match(/cliente\s+(.+?)(?=\s+(?:dispositivo|problema)\b|$)/)||[])[1];
+      d=(rest.match(/dispositivo\s+(.+?)(?=\s+(?:cliente|problema)\b|$)/)||[])[1];
+      p=(rest.match(/problema\s+(.+?)(?=\s+(?:cliente|dispositivo)\b|$)/)||[])[1];
+      if(!c)c=(rest.match(/^(.+?)(?=\s+(?:dispositivo|problema)\b|$)/)||[])[1];
+    }else{const parts=rest.split(/\s*,\s*/);c=parts[0];d=parts[1];p=parts.slice(2).join(', ')}
+    if(!c)return speak('Dimmi almeno il nome del cliente.');
+    S.rep.unshift({id:uid(),c,d,p,s:'in corso',pr,upd:Date.now()});save();render();
+    return speak('Riparazione aggiunta per '+c+(d?', '+d:'')+', priorità '+PRN[pr]+(RPon()?'. Creata anche su RepairPro.':'.'));
+  }
+  if(m=t.match(/^(.+?)\s+(?:è|e'|e)\s+(pronto|pronta|finito|finita)$/)){
+    const i=S.rep.find(r=>r.c.toLowerCase().includes(m[1].replace(/^la riparazione di /,'')));
+    if(!i)return speak('Non trovo la riparazione di '+m[1]+'.');
+    i.s='pronta';i.upd=Date.now();save();render();return speak('Segnata come pronta la riparazione di '+i.c+'.');
+  }
+  if(m=t.match(/^(?:metti\s+)?(.+?)\s+(?:è\s+|in\s+|come\s+)?(urgente|rosso|rossa|giallo|gialla|verde|può aspettare)$/)){
+    const i=findRep(m[1]);
+    if(i){i.pr=prKey(m[2]);save();render();return speak('Priorità '+PRN[i.pr]+' per '+i.c+'.')}
+  }
+  if(/magazzino|sotto scorta|scorte basse|giacenza|riordin|^crea\s+(?:un\s+)?(?:nuovo\s+)?articolo|^(?:ho usato|ho venduto|ho consumato|scarico|sono arrivat|ho ricevuto)|^quant[ie] .+ (?:ho|abbiamo|ci sono|rimangono|restano)\b/.test(t)){
+    if(/sotto scorta|scorte basse|cosa (?:sta )?finendo|cosa manca|da riordinare|cosa devo riordinare|^riordina/.test(t)){
+      const ML=mlGet();if(!ML)return noMag();
+      const low=ML.filter(x=>x.qty<=x.min);
+      if(/\b(?:lista|acquist)/.test(t)||/^(?:ordina|riordina|metti|aggiungi)\b/.test(t)){
+        low.forEach(x=>addBuy(x.desc));
+        return speak(low.length?low.length+(low.length===1?' articolo aggiunto':' articoli aggiunti')+' alla lista acquisti.':'Non c’è niente sotto scorta.');
+      }
+      return speak(low.length?low.length+' articoli sotto scorta: '+low.slice(0,6).map(x=>x.desc+', '+pz(x.qty)).join('; ')+'.':'Nessun articolo sotto scorta.');
+    }
+    m=t.match(/^quant[ie]\s+(.+?)\s+(?:ho|abbiamo|ci sono|rimangono|restano|c'è)\b/)||t.match(/^(?:giacenza|disponibilit[àa]|scorta)\s+(?:di|del|della|dei|delle)?\s*(.+?)(?:\s+in magazzino)?$/)||t.match(/^(?:ho|abbiamo)\s+(.+?)\s+in magazzino$/);
+    if(m)return magOp('q',m[1],1);
+    m=t.match(/^crea\s+(?:un\s+)?(?:nuovo\s+)?articolo\s+(.+?)(?:\s+con\s+(\S+)\s+pezz[io])?$/);
+    if(m)return magNew(m[1],m[2]?pn(m[2]):0);
+    m=t.match(new RegExp('^(?:aggiungi|carica|carico|metti|ho ricevuto|sono arrivat[io])\\s+(?:'+NW+'\\s+)?(.+?)\\s+(?:al|in|nel|a)\\s+magazzino$'))||t.match(new RegExp('^(?:ho ricevuto|sono arrivat[io])\\s+(?:'+NW+'\\s+)?(.+)$'));
+    if(m)return magOp('add',m[2],m[1]?pn(m[1]):1);
+    m=t.match(new RegExp('^(?:scarico|scarica|ho usato|ho venduto|ho consumato|togli|rimuovi)\\s+(?:'+NW+'\\s+)?(.+?)(?:\\s+(?:dal|da|nel|in)\\s+magazzino)?$'));
+    if(m&&(/magazzino/.test(t)||/^(?:scarico|ho usato|ho venduto|ho consumato)/.test(t)))return magOp('sub',m[2],m[1]?pn(m[1]):1);
+  }
+  if(m=t.match(/(?:cerca|cercami|trovami)\s+(.+?)\s+su amazon/)){
+    const w=window.open('https://www.amazon.it/s?k='+encodeURIComponent(m[1]),'_blank');
+    return speak(w?'Cerco '+m[1]+' su Amazon.':'Il browser ha bloccato l’apertura. Aggiungilo alla lista e tocca il pulsante Amazon.');
+  }
+  if(m=t.match(/(?:cambia|metti|usa|imposta)\s+(?:il\s+)?(?:tono|voce)\s+(?:di voce\s+)?(?:in\s+|a\s+)?(.+)$/)){
+    const q=m[1].trim(),k=Object.keys(TONI).find(n=>n.toLowerCase().includes(q)||q.includes(n.toLowerCase()));
+    if(k)return setTone(k);
+  }
+  if(m=t.match(/voce\s+(?:più\s+)?(veloce|lenta|bassa|profonda|alta|acuta)/)){
+    const w=m[1],c=(v,a,b)=>Math.min(b,Math.max(a,Math.round(v*100)/100));
+    if(w==='veloce')CFG.rate=c(CFG.rate+0.15,0.6,1.5);else if(w==='lenta')CFG.rate=c(CFG.rate-0.15,0.6,1.5);
+    else if(w==='bassa'||w==='profonda')CFG.pitch=c(CFG.pitch-0.15,0.5,1.5);else CFG.pitch=c(CFG.pitch+0.15,0.5,1.5);
+    try{localStorage.setItem('jarvis-cfg',JSON.stringify(CFG))}catch(e){}
+    toneSel();return speak('Fatto, voce più '+w+'.');
+  }
+  if(/(chiudi|esci).*(hud|modalità)|^chiudi hud/.test(t)){closeHud();return}
+  if(/modalità (hud|jarvis)|^(apri )?hud$|schermo intero/.test(t)){openHud();return}
+  if(/metti in ordine|in ordine di priorità|cosa devo fare prima|da dove (parto|comincio)/.test(t)){
+    const a=sorted().filter(i=>i.s!=='consegnata');
+    if(!a.length)return speak('Nessuna riparazione aperta.');
+    return speak('Ecco l’ordine: '+a.map((i,n)=>(n+1)+') '+i.c+', '+(i.d||'')+', '+PRN[i.pr||'giallo']).join('; '));
+  }
+  if(m=t.match(/(?:soluzion[ei]|aiutami|come (?:risolvo|ripar[oi])|diagnosi)\s+(?:per |con |di |la riparazione di )*(.+)$/)){
+    const i=findRep(m[1]);if(i)return solve(i);
+  }
+  if(m=t.match(/^(?:impara|ricorda)[:,]?\s*quando (?:ti )?(?:dico|chiedo)\s+(.+?)\s+(?:tu )?rispondi\s+(.+)$/)){
+    S.teach.push({q:m[1].trim().toLowerCase(),a:m[2].trim()});save();renderTeach();return speak('Imparato. Quando mi dici “'+m[1]+'” rispondo così.');
+  }
+  if(m=t.match(/^(?:modifica|apri)\s+(?:la scheda di |scheda di |la riparazione di )?(.+)$/)){
+    const i=findRep(m[1]);if(i){edit(i);return speak('Apro la scheda di '+i.c+'.')}
+  }
+  if(/repair\s?pro/.test(t)){
+    const i=S.rep.find(r=>t.includes(r.c.toLowerCase()));
+    if(i)return toRP(i);
+  }
+  if(m=t.match(/scheda cliente (?:per |di )?(.+)$/)){
+    const i=findRep(m[1]);if(i)return scheda(i);
+  }
+  if(m=t.match(/^(?:togli|rimuovi|elimina|cancella)\s+(.+?)(?:\s+dalla lista.*)?$/)){
+    const q=m[1],n=S.buy.length;
+    S.buy=S.buy.filter(i=>!i.t.toLowerCase().includes(q));
+    if(S.buy.length<n){save();render();return speak('Tolto '+q+' dalla lista.')}
+    if(RPon())return speak('Per eliminare una riparazione usa RepairPro.');const r=S.rep.length;S.rep=S.rep.filter(i=>!i.c.toLowerCase().includes(q.replace(/^la riparazione di /,'')));
+    if(S.rep.length<r){save();render();return speak('Riparazione rimossa.')}
+    return speak('Non ho trovato '+q+'.');
+  }
+  if(m=t.match(/^(?:aggiungi|metti|ordina|compra)\s+(.+?)(?:\s+(?:alla|in|nella|sulla)\s+lista.*)?$/)){
+    S.buy.unshift({id:uid(),t:m[1]});save();render();return speak('Aggiunto: '+m[1]+'.');
+  }
+  const hit=S.teach.find(x=>t.includes(x.q));
+  if(hit){lastTaught=Date.now();return speak(hit.a)}
+  return chat(raw);
+}
+
+function ctx(){
+  const o=sorted().filter(i=>i.s!=='consegnata'),d=new Date().setHours(0,0,0,0),g=S.rep.filter(i=>i.upd>=d);
+  return 'Riparazioni aperte (per priorità): '+(o.map(i=>i.c+' - '+(i.d||'?')+' - '+(i.p||'?')+' - '+PRN[i.pr||'giallo']+' - '+i.s).join('; ')||'nessuna')+'. Oggi: '+g.filter(i=>i.s==='pronta').length+' pronte, '+g.filter(i=>i.s==='consegnata').length+' consegnate, '+g.length+' movimenti. Da ordinare: '+(S.buy.map(i=>i.t).join(', ')||'niente')+'.';
+}
+let noTc=false;
+async function gem(system,msgs,max){
+  if(!CFG.gkey)throw new Error('Manca la chiave Gemini: incollala in Impostazioni → Intelligenza artificiale.');
+  const mp=[...new Set(S.rep.map(i=>i.c).filter(c=>c&&c.length>2))].map((c,n)=>[c,'Cliente '+(n+1)]);
+  const fwd=x=>mp.reduce((a,[c,k])=>a.replace(new RegExp(esc(c),'gi'),k),x);
+  const back=x=>mp.reduce((a,[c,k])=>a.replace(new RegExp(esc(k)+'\\b','g'),c),x);
+  const m=CFG.gmodel,tc=/2\.5/.test(m)?{thinkingBudget:0}:/(^|-)3/.test(m)?{thinkingLevel:'low'}:null;
+  const mk=u=>JSON.stringify({system_instruction:{parts:[{text:fwd(system)}]},contents:msgs.map(x=>({role:x.role==='assistant'?'model':'user',parts:[{text:fwd(x.content)}]})),generationConfig:Object.assign({maxOutputTokens:max||700},u&&tc?{thinkingConfig:tc}:{})});
+  const go=async body=>{
+    const ac=new AbortController(),to=setTimeout(()=>ac.abort(),25000);
+    try{return await fetch('https://generativelanguage.googleapis.com/v1beta/models/'+encodeURIComponent(m)+':generateContent',{method:'POST',headers:{'content-type':'application/json','x-goog-api-key':CFG.gkey},body,signal:ac.signal})}
+    catch(e){if(e.name==='AbortError')throw new Error('Gemini non risponde: riprova tra poco.');throw e}
+    finally{clearTimeout(to)}
+  };
+  let u=!!tc&&!noTc,r=await go(mk(u));
+  if(r.status===400&&u){u=false;r=await go(mk(false));if(r.ok)noTc=true}
+  if(r.status===429||r.status===503){await new Promise(z=>setTimeout(z,2500));r=await go(mk(u))}
+  const j=await r.json();
+  if(!r.ok){
+    if(r.status===429||r.status===503)throw new Error('Gemini è sovraccarico oppure hai raggiunto il limite gratuito: riprova tra qualche istante.');
+    throw new Error((j.error&&j.error.message)||'Errore '+r.status);
+  }
+  const out=((j.candidates&&j.candidates[0]&&j.candidates[0].content&&j.candidates[0].content.parts)||[]).map(p=>p.text||'').join('\n');
+  if(!out)throw new Error('Risposta vuota da Gemini.');
+  return back(out);
+}
+async function ai(system,msgs,max){
+  if(CFG.provider==='gemini')return gem(system,msgs,max);
+  if(!KEY&&window.claude&&window.claude.use){const sm=await window.claude.use('sample');if(sm){const r2=await sm(system+'\n\nConversazione:\n'+msgs.map(m=>(m.role==='user'?'Utente: ':'Assistente: ')+m.content).join('\n')+'\n\nRispondi ora come assistente, senza anteporre etichette.',{cache:false,modelTier:'quick'});return (r2.text||'').trim()}}
+  if(!KEY)throw new Error('Manca la chiave: aprila in “Intelligenza artificiale” e incollala.');
+  const r=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'content-type':'application/json','x-api-key':KEY,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},body:JSON.stringify({model:CFG.model,max_tokens:max||700,system,messages:msgs})});
+  const j=await r.json();
+  if(!r.ok)throw new Error((j.error&&j.error.message)||'Errore '+r.status);
+  return j.content.filter(b=>b.type==='text').map(b=>b.text).join('\n');
+}
+const errMsg=e=>/x-api-key|api key not valid|API_KEY_INVALID/i.test(e.message)?'La chiave non è valida per il motore scelto. Controlla in Impostazioni che il motore (Claude o Gemini) corrisponda alla chiave inserita.':/fetch|Failed|Load failed/i.test(e.message)?'Non riesco a contattare il servizio AI. Questa funzione va usata dalla pagina su GitHub, con la chiave salvata.':e.message;
+async function chat(raw){
+  $('reply').textContent='…';
+  hist.push({role:'user',content:raw});hist=hist.slice(-10);
+  while(hist.length&&hist[0].role!=='user')hist.shift();
+  try{
+    const a=await ai('Sei '+CFG.name+', assistente vocale di '+CFG.call+', titolare del negozio di riparazioni Techandbet (smartphone, console, PC, elettronica) in Italia. Rispondi in italiano, breve e naturale (max 3 frasi) perché la risposta viene letta ad alta voce. Puoi fare due chiacchiere e commentare la giornata. Stile: '+STILI[CFG.style]+' '+CFG.extra+' Dati attuali: '+ctx(),hist,260);
+    hist.push({role:'assistant',content:a});speak(a);
+  }catch(e){hist.pop();speak(errMsg(e))}
+}
+async function solve(i){
+  $('reply').textContent='Cerco soluzioni…';
+  try{
+    i.sol=await ai('Sei un tecnico esperto di riparazioni elettroniche. Rispondi in italiano, conciso: elenco numerato di 3-5 cause probabili in ordine di probabilità, ciascuna con il test rapido da fare e l’intervento o ricambio. Non inventare codici ricambio.',[{role:'user',content:'Dispositivo: '+(i.d||'non indicato')+'. Problema: '+(i.p||'non indicato')+'.'}]);
+    save();render();speak('Ho trovato alcune possibili cause per '+i.c+'. Le vedi sulla scheda.');
+  }catch(e){speak(errMsg(e))}
+}
+/* Magazzino di RepairPro a voce */
+let pendMag=null,pendBuy=null;
+const NUM={un:1,uno:1,una:1,due:2,tre:3,quattro:4,cinque:5,sei:6,sette:7,otto:8,nove:9,dieci:10,dodici:12,quindici:15,venti:20};
+const pn=w=>/^\d+$/.test(w)?+w:(NUM[w]||1);
+const NW='(\\d+|un|uno|una|due|tre|quattro|cinque|sei|sette|otto|nove|dieci|dodici|quindici|venti)';
+const SIN={display:'schermo',displays:'schermo',lcd:'schermo',screen:'schermo',schermi:'schermo',batterie:'batteria',connettori:'connettore',fotocamere:'fotocamera',cavi:'cavo',scocche:'scocca'};
+const STOP=['di','da','per','del','della','dello','dei','delle','degli','le','i','gli','il','lo','la','l','un','una','uno','pezzi','pezzo','articoli','articolo','ricambio','ricambi'];
+const norm=x=>(x||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9 ]+/g,' ').replace(/\s+/g,' ').trim();
+function mlGet(){if(!RPon())return null;const r=localStorage.getItem('rp_ml');if(r===null)return null;try{return JSON.parse(r)}catch(e){return null}}
+function mlPut(ML){localStorage.setItem('rp_ml',JSON.stringify(ML))}
+const noMag=()=>speak('Non trovo il magazzino di RepairPro. Apri RepairPro almeno una volta dallo stesso sito di Jarvis e controlla che il collegamento sia attivo.');
+function addBuy(d){if(!S.buy.some(b=>b.t.toLowerCase()===d.toLowerCase())){S.buy.unshift({id:uid(),t:d});save();render()}}
+function mlFind(q){
+  const ML=mlGet()||[];
+  const toks=norm(q).split(' ').filter(w=>w&&!STOP.includes(w)).map(w=>SIN[w]||w);
+  if(!toks.length)return[];
+  const rows=ML.map((m,i)=>{const h=norm(m.desc+' '+m.cod+' '+m.cat),ws=h.split(' ');return{m,i,h,ws}});
+  let f=rows.filter(x=>toks.every(w=>x.ws.includes(w)));
+  if(!f.length)f=rows.filter(x=>toks.every(w=>x.h.includes(w)));
+  f.forEach(x=>{x.exact=x.ws.filter(w=>!STOP.includes(w)).length===toks.length});
+  return f.sort((a,b)=>(b.exact-a.exact)||a.h.length-b.h.length).slice(0,6);
+}
+function pz(n){return n+(n===1?' pezzo':' pezzi')}
+function magApply(op,idx,n){
+  const ML=mlGet();if(!ML||!ML[idx])return noMag();
+  const m=ML[idx],prima=m.qty;
+  m.qty=op==='add'?m.qty+n:Math.max(0,m.qty-n);
+  mlPut(ML);render();
+  let t=m.desc+': ora '+pz(m.qty)+'.';
+  if(op==='sub'&&n>prima)t+=' Ne avevo solo '+prima+'.';
+  if(m.qty<=m.min){t+=' È sotto scorta. Lo aggiungo alla lista acquisti?';pendBuy=m.desc}
+  speak(t);
+}
+function magOp(op,q,n){
+  const ML=mlGet();if(!ML)return noMag();
+  const f=mlFind(q);
+  if(!f.length)return speak('Non trovo “'+q+'” in magazzino.'+(op==='add'?' Di’ “crea articolo '+q+'” per aggiungerlo.':''));
+  if(op==='q'){
+    if(f.length===1||f[0].exact&&!(f[1]&&f[1].exact))return speak(f[0].m.desc+': '+pz(f[0].m.qty)+', scorta minima '+f[0].m.min+'.');
+    return speak('Ho trovato '+f.length+' articoli: '+f.slice(0,4).map(x=>x.m.desc+', '+pz(x.m.qty)).join('; ')+'.');
+  }
+  const pick=f.length===1?f[0]:(f[0].exact&&!(f[1]&&f[1].exact)?f[0]:null);
+  if(pick)return magApply(op,pick.i,n);
+  pendMag={op,n,list:f.slice(0,5).map(x=>x.i)};
+  speak('Ho trovato '+f.length+' articoli: '+f.slice(0,5).map((x,k)=>(k+1)+', '+x.m.desc).join('; ')+'. Quale? Di’ il numero.');
+}
+function magNew(d,q){
+  const ML=mlGet();if(!ML)return noMag();
+  const cat=/schermo|display|lcd/i.test(d)?'Schermo':/batteri/i.test(d)?'Batteria':/connettor|ricarica/i.test(d)?'Connettore':/fotocamer|camera/i.test(d)?'Fotocamera':/scocca|cover|retro/i.test(d)?'Scocca':/scheda madre/i.test(d)?'Scheda madre':'Altro';
+  ML.push({cod:'N/A',desc:cap(d),cat,tipo:'',qty:q||0,min:1,pac:0,pven:0});
+  mlPut(ML);render();
+  speak('Creato l’articolo '+cap(d)+' con '+pz(q||0)+', categoria '+cat+'. Completa prezzi e codice in RepairPro.');
+}
+function renderMagJ(){
+  const el=$('magj');if(!el)return;el.textContent='';
+  const ML=mlGet();
+  if(!ML){el.className='empty';el.textContent=RPon()?'Magazzino di RepairPro non trovato.':'Collega RepairPro per gestire il magazzino a voce.';return}
+  el.className='';
+  const low=ML.map((m,i)=>({m,i})).filter(x=>x.m.qty<=x.m.min);
+  const c=document.createElement('div');c.id='mag-chips';c.style.cssText='display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px';
+  c.innerHTML='<span class="chip verde">'+ML.length+' articoli</span><span class="chip '+(low.length?'rosso':'verde')+'">'+low.length+' sotto scorta</span>';
+  el.appendChild(c);
+  if(!low.length)return;
+  const ul=document.createElement('ul');
+  low.slice(0,8).forEach(x=>{
+    const li=document.createElement('li'),t=document.createElement('span');t.className='t';t.textContent=x.m.desc;
+    const s=document.createElement('small');s.textContent=pz(x.m.qty)+' · minimo '+x.m.min;t.appendChild(s);
+    const bt=(txt,f)=>{const b=document.createElement('button');b.className='act';b.style.margin='0';b.textContent=txt;b.onclick=f;return b};
+    li.append(t,bt('+1',()=>magApply('add',x.i,1)),bt('−1',()=>magApply('sub',x.i,1)),bt('In lista',()=>{addBuy(x.m.desc);speak('Aggiunto alla lista acquisti.')}));
+    ul.appendChild(li);
+  });
+  el.appendChild(ul);
+}
+
+/* Collegamento diretto a RepairPro (stesso sito github.io) */
+const RPon=()=>CFG.rp!==false&&(localStorage.getItem('rp_rl')!==null||localStorage.getItem('rp_ml')!==null);
+const pd=x=>{const m=(x||'').match(/(\d+)\/(\d+)\/(\d+)/);return m?new Date(+m[3],+m[2]-1,+m[1]).getTime():0};
+const sJ=x=>x==='Pronto'?'pronta':x==='Consegnato'?'consegnata':'in corso';
+const sRP={'in corso':'In lavorazione',pronta:'Pronto',consegnata:'Consegnato'};
+const catOf=dv=>/ps[2-5]|playstation|xbox|switch|console|psp/i.test(dv)?'Console':/notebook|laptop|macbook/i.test(dv)?'Notebook':/\bpc\b|computer/i.test(dv)?'PC':/ipad|tablet/i.test(dv)?'Tablet':'Smartphone';
+function prOf(r){
+  if(r.priorita&&PR[r.priorita]!==undefined)return r.priorita;
+  if(!r.consegna)return 'giallo';
+  const o=new Date();o.setHours(0,0,0,0);const d=new Date(r.consegna);d.setHours(0,0,0,0);
+  const diff=Math.ceil((d-o)/86400000);
+  return isNaN(diff)?'giallo':diff<=0?'rosso':diff<=3?'giallo':'verde';
+}
+function rpLoad(){
+  let RL;try{RL=JSON.parse(localStorage.getItem('rp_rl')||'[]')}catch(e){return}
+  const today=new Date().toLocaleDateString('it-IT');
+  S.rep=RL.filter(r=>r.stato!=='Consegnato'||r.dataConsegnato===today).map(r=>{
+    const s=sJ(r.stato),pr=prOf(r),o={c:r.nome||'(senza nome)',d:r.device||'',p:r.problema||'',tel:r.tel||'',note:r.note||'',sol:r.diagnosiJarvis||''};
+    return{id:'rp'+r.id,rid:r.id,c:o.c,d:o.d,p:o.p,tel:o.tel,note:o.note,s,s0:s,pr,pr0:pr,sol:o.sol,o,upd:pd(r.dataConsegnato)||pd(r.data)};
+  });
+}
+function rpSave(){
+  if(!RPon())return;
+  let RL;try{RL=JSON.parse(localStorage.getItem('rp_rl')||'[]')}catch(e){return}
+  let rid=parseInt(localStorage.getItem('rp_rid')||'0')||0;RL.forEach(x=>{rid=Math.max(rid,+x.id||0)});
+  const today=new Date().toLocaleDateString('it-IT');
+  S.rep.forEach(i=>{
+    let rec=i.rid&&RL.find(x=>x.id===i.rid);
+    if(!rec){
+      rid++;rec={id:rid,categoria:catOf(i.d||''),nome:i.c,tel:i.tel||'',email:'',device:i.d||'Non indicato',imei:'',tipo:'Fuori garanzia',costo:'',pin:'',schema:'',accessori:'Solo dispositivo',estetica:'-',consegna:'',stato:i.s==='in corso'?'In attesa':sRP[i.s],datric:'',esito:'',problema:i.p||'',note:i.note||'',ricambi:[],data:today};
+      RL.unshift(rec);i.rid=rid;i.id='rp'+rid;i.s0=i.s;i.pr0=null;i.o={};
+    }
+    const o=i.o||{};
+    if(i.c!==o.c)rec.nome=i.c;
+    if(i.d!==o.d&&i.d)rec.device=i.d;
+    if(i.p!==o.p)rec.problema=i.p||'';
+    if(i.tel!==o.tel)rec.tel=i.tel||'';
+    if(i.note!==o.note)rec.note=i.note||'';
+    if(i.sol!==o.sol)rec.diagnosiJarvis=i.sol||'';
+    if(i.s!==i.s0){
+      const was=rec.stato;rec.stato=sRP[i.s]||rec.stato;
+      if(rec.stato==='Consegnato'&&was!=='Consegnato')rec.dataConsegnato=today;
+      if(rec.stato!=='Consegnato'&&was==='Consegnato')rec.dataConsegnato=null;
+    }
+    if(i.pr!==i.pr0)rec.priorita=i.pr;
+    i.s0=i.s;i.pr0=i.pr;i.o={c:i.c,d:i.d,p:i.p,tel:i.tel||'',note:i.note||'',sol:i.sol||''};
+  });
+  localStorage.setItem('rp_rl',JSON.stringify(RL));localStorage.setItem('rp_rid',String(rid));
+}
+window.addEventListener('storage',e=>{if(!RPon())return;if(e.key==='rp_rl')rpLoad();if(e.key==='rp_rl'||e.key==='rp_ml')render()});
+document.addEventListener('visibilitychange',()=>{if(!document.hidden&&RPon()){rpLoad();render()}});
+
+function toRP(i){
+  const raw=localStorage.getItem('rp_rl');
+  if(raw===null&&localStorage.getItem('rp_ml')===null)return speak('Non trovo i dati di RepairPro su questo sito. Apri RepairPro almeno una volta dallo stesso indirizzo github.io di Jarvis.');
+  if(i.rp||i.rid)return speak('La scheda di '+i.c+' è già stata inviata a RepairPro.');
+  let RL;try{RL=JSON.parse(raw||'[]')}catch(e){return speak('I dati di RepairPro non sono leggibili.')}
+  const id=Math.max(parseInt(localStorage.getItem('rp_rid')||'0')||0,...RL.map(x=>+x.id||0))+1,dv=i.d||'';
+  const cat=/ps[2-5]|playstation|xbox|switch|console|psp/i.test(dv)?'Console':/notebook|laptop|macbook/i.test(dv)?'Notebook':/\bpc\b|computer/i.test(dv)?'PC':/ipad|tablet/i.test(dv)?'Tablet':'Smartphone';
+  const stato={'in corso':'In lavorazione',pronta:'Pronto',consegnata:'Consegnato'}[i.s]||'In attesa';
+  const note=['Priorità: '+PRN[i.pr||'giallo'],i.note,i.sol&&'Diagnosi Jarvis:\n'+i.sol].filter(Boolean).join('\n');
+  RL.unshift({id,categoria:cat,nome:i.c,tel:i.tel||'',email:'',device:dv||'Non indicato',imei:'',tipo:'Fuori garanzia',costo:'',pin:'',schema:'',accessori:'Solo dispositivo',estetica:'-',consegna:'',stato,datric:'',esito:'',problema:i.p||'',note,ricambi:[],data:new Date().toLocaleDateString('it-IT'),priorita:i.pr||'giallo'});
+  localStorage.setItem('rp_rl',JSON.stringify(RL));localStorage.setItem('rp_rid',String(id));
+  i.rp=id;save();render();
+  speak('Scheda di '+i.c+' inviata a RepairPro, numero '+id+'.');
+}
+function scheda(i){
+  const o={tipo:'scheda_cliente',cliente:i.c,telefono:i.tel||'',note:i.note||'',dispositivo:i.d||'',problema:i.p||'',priorita:i.pr||'giallo',stato:i.s,diagnosi:i.sol||'',aggiornata:new Date(i.upd||Date.now()).toISOString()};
+  const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify(o,null,2)],{type:'application/json'}));a.download='scheda-'+i.c.replace(/\W+/g,'-')+'.json';a.click();
+  speak('Scheda di '+i.c+' esportata.');
+}
+
+/* Riconoscimento vocale */
+function dbg(t){const d=$('dbg');if(d)d.textContent=new Date().toLocaleTimeString('it-IT')+' · '+t}
+const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+let rec=null,on=false,lastCmd='',lastCmdT=0;
+function stopRec(){on=false;const r=rec;rec=null;try{r&&r.stop()}catch(e){}$('mic').classList.remove('live')}
+function start(){
+  if(!SR){speak('Questo browser non supporta il riconoscimento vocale. Usa Chrome o Safari aggiornato, oppure scrivi il comando.');return}
+  const always=$('always').checked,r=new SR();rec=r;
+  r.lang='it-IT';r.interimResults=true;r.continuous=always;r._done=-1;
+  r.onstart=()=>{r._done=-1;dbg('Microfono attivo')};r.onaudiostart=()=>dbg('Audio in ingresso: ok');r.onspeechstart=()=>dbg('Sento una voce…');
+  r.onresult=e=>{
+    let interim='';
+    for(let k=e.resultIndex;k<e.results.length;k++){
+      const res=e.results[k],txt=res[0].transcript.trim();
+      if(!txt)continue;
+      if(!res.isFinal){interim+=txt+' ';continue}
+      if(k<=r._done)continue;
+      r._done=k;
+      dbg('Frase: '+txt);
+      if(talking){dbg('Ignorata: Jarvis sta ancora parlando');continue}
+      if(always&&!wakeAny.test(txt)&&Date.now()>=awakeUntil){$('heard').textContent='Sentito, ma senza “'+CFG.name+'”: '+txt;continue}
+      if(txt===lastCmd&&Date.now()-lastCmdT<3000)continue;
+      lastCmd=txt;lastCmdT=Date.now();
+      awakeUntil=Date.now()+12000;run(txt);
+    }
+    if(interim)$('heard').textContent='Sento: '+interim.trim();
+  };
+  r.onerror=e=>{
+    const m={'not-allowed':'Microfono bloccato: consenti l’accesso nelle impostazioni del browser.','service-not-allowed':'Riconoscimento vocale disattivato: su iPhone attiva Impostazioni → Generali → Tastiera → Abilita dettatura.','audio-capture':'Non trovo nessun microfono.','network':'Il riconoscimento vocale richiede internet.'}[e.error];
+    if(m){$('heard').textContent=m;if(e.error!=='network')stopRec()}
+    else if(e.error!=='no-speech'&&e.error!=='aborted')$('heard').textContent='Errore microfono: '+e.error;
+  };
+  r.onend=()=>{
+    if(r!==rec)return;
+    if(on&&always){dbg('Riavvio ascolto');setTimeout(()=>{if(r!==rec||!on)return;try{r.start()}catch(x){stopRec();$('heard').textContent='Ascolto interrotto: tocca il microfono per riattivarlo.'}},250)}
+    else stopRec();
+  };
+  try{r.start();on=true;$('mic').classList.add('live');$('heard').textContent=always?'In ascolto: di’ “'+CFG.name+'…” e il comando':'Ti ascolto… parla ora'}catch(e){rec=null;$('heard').textContent='Non riesco ad avviare il microfono.'}
+}
+$('always').onchange=()=>{stopRec();if($('always').checked)start()};
+$('mic').onclick=()=>{
+  if(talking){bgStop();talking=false;spk++;clearTimeout(talkTimer);try{speechSynthesis.cancel()}catch(e){}try{if(curAudio){curAudio.pause();curAudio=null}}catch(e){}return}
+  if(on)stopRec();else start();
+};
+let cur=null;
+function edit(i){cur=i;$('e-c').value=i.c;$('e-tel').value=i.tel||'';$('e-d').value=i.d||'';$('e-p').value=i.p||'';$('e-n').value=i.note||'';$('e-pr').value=i.pr||'giallo';$('e-s').value=i.s;$('dlg').showModal()}
+$('df').onsubmit=e=>{e.preventDefault();if(!cur)return;Object.assign(cur,{c:$('e-c').value.trim()||cur.c,tel:$('e-tel').value.trim(),d:$('e-d').value.trim(),p:$('e-p').value.trim(),note:$('e-n').value.trim(),pr:$('e-pr').value,s:$('e-s').value,upd:Date.now()});save();render();$('dlg').close()};
+$('e-x').onclick=()=>$('dlg').close();
+const tick=()=>{$('clk').textContent=new Date().toLocaleTimeString('it-IT',{hour:'2-digit',minute:'2-digit'})};tick();setInterval(tick,30000);
+
+function fillVoices(){
+  const sel=$('s-voice'),vs=[...speechSynthesis.getVoices()];
+  sel.textContent='';sel.add(new Option('Predefinita del dispositivo',''));
+  vs.sort((a,b)=>(/^it/i.test(b.lang)-/^it/i.test(a.lang))||a.name.localeCompare(b.name)).forEach(v=>sel.add(new Option(v.name+' ('+v.lang+')',v.voiceURI)));
+  sel.value=CFG.voice;
+}
+try{speechSynthesis.onvoiceschanged=fillVoices}catch(e){}
+function renderTeach(){
+  const u=$('tl');u.textContent='';
+  S.teach.forEach((x,n)=>{
+    const li=document.createElement('li'),t=document.createElement('span'),b=document.createElement('button');
+    t.className='t';t.textContent='“'+x.q+'” → '+x.a;b.className='x';b.textContent='×';b.type='button';b.setAttribute('aria-label','Rimuovi');
+    b.onclick=()=>{S.teach.splice(n,1);save();renderTeach()};li.append(t,b);u.appendChild(li);
+  });
+}
+$('gear').onclick=()=>{
+  $('s-name').value=CFG.name;$('s-alias').value=CFG.alias;$('s-call').value=CFG.call;$('s-style').value=CFG.style;$('s-extra').value=CFG.extra;
+  $('s-rate').value=CFG.rate;$('s-pitch').value=CFG.pitch;$('o-rate').textContent=CFG.rate;$('o-pitch').textContent=CFG.pitch;
+  $('s-model').value=CFG.model;$('s-theme').value=CFG.theme;$('s-rp').checked=CFG.rp!==false;$('s-prov').value=CFG.provider;$('gmodel').value=CFG.gmodel;$('gkey').value='';
+  $('gkey').placeholder=CFG.gkey?'✓ Salvata (…'+CFG.gkey.slice(-4)+'). Vuoto = non cambiarla':'Incolla qui la chiave';
+  $('key').placeholder=KEY?'✓ Salvata (…'+KEY.slice(-4)+'). Vuoto = non cambiarla':'sk-ant-…';
+  $('el-key').placeholder=EL.key?'✓ Salvata (…'+EL.key.slice(-4)+'). Vuoto = non cambiarla':'Incolla qui la chiave';$('key').value='';$('el-on').checked=EL.on;$('el-vid').value=EL.vid;$('el-key').value='';$('el-model').value=EL.model;$('el-hud').checked=EL.hudOnly;const mo=new Date().toISOString().slice(0,7);$('el-use').textContent='Caratteri usati questo mese: '+(EL.mo===mo?EL.used:0)+'. Il piano gratuito ha 10.000 crediti al mese.';
+  $('kst').textContent=KEY?'Chiave già salvata su questo dispositivo.':'Nessuna chiave salvata. Serve per conversazione e soluzioni.';
+  fillVoices();renderTeach();$('sdlg').showModal();
+};
+$('s-rate').oninput=()=>$('o-rate').textContent=$('s-rate').value;
+$('s-pitch').oninput=()=>$('o-pitch').textContent=$('s-pitch').value;
+$('s-test').onclick=()=>{
+  const old={...CFG};Object.assign(CFG,{voice:$('s-voice').value,rate:+$('s-rate').value,pitch:+$('s-pitch').value});
+  speak('Ciao, sono '+($('s-name').value||'Jarvis')+'. Così suona la mia voce.');Object.assign(CFG,old);
+};
+$('t-add').onclick=()=>{
+  const q=$('t-q').value.trim().toLowerCase(),a=$('t-a').value.trim();
+  if(q&&a){S.teach.push({q,a});save();renderTeach();$('t-q').value='';$('t-a').value=''}
+};
+$('s-x').onclick=()=>$('sdlg').close();
+
+/* ===== Buongiorno ===== */
+let BG={meteo:1,rip:1,buy:1,sc:1,city:'Napoli'},bgId=0;
+try{Object.assign(BG,JSON.parse(localStorage.getItem('jarvis-bg')||'{}'))}catch(e){}
+const bgSave=()=>{try{localStorage.setItem('jarvis-bg',JSON.stringify(BG))}catch(e){}};
+const bgStop=()=>{bgId++};
+const bgWait=ms=>new Promise(r=>setTimeout(r,ms));
+async function bgSay(t,id){if(id!==bgId)return;speak(t);await bgWait(500);const t0=Date.now();while(talking&&id===bgId&&Date.now()-t0<45000)await bgWait(200);if(id===bgId)await bgWait(300)}
+const bgWmo=c=>c===0?'sereno':c<=3?'poco nuvoloso':c<=48?'nebbia':c<=57?'pioggerella':c<=67?'pioggia':c<=77?'neve':c<=82?'rovesci':'temporale';
+async function bgMeteo(){
+  const g=await(await fetch('https://geocoding-api.open-meteo.com/v1/search?count=1&language=it&name='+encodeURIComponent(BG.city))).json(),p=g.results[0];
+  const w=await(await fetch('https://api.open-meteo.com/v1/forecast?latitude='+p.latitude+'&longitude='+p.longitude+'&current=temperature_2m,weather_code&daily=temperature_2m_max,temperature_2m_min,precipitation_probability_max&timezone=auto&forecast_days=1')).json(),R=Math.round;
+  return 'A '+p.name+' ci sono '+R(w.current.temperature_2m)+' gradi, '+bgWmo(w.current.weather_code)+'. Minima '+R(w.daily.temperature_2m_min[0])+', massima '+R(w.daily.temperature_2m_max[0])+', pioggia '+w.daily.precipitation_probability_max[0]+' per cento.';
+}
+async function buongiorno(){
+  const id=++bgId,mp=BG.meteo?bgMeteo().catch(()=>null):null,h=new Date().getHours(),g=h<12?'Buongiorno':h<18?'Buon pomeriggio':'Buonasera';
+  await bgSay(g+' '+(CFG.style==='ironico'?'signore':CFG.style==='friday'?'capo':CFG.call)+'. Oggi è '+new Date().toLocaleDateString('it-IT',{weekday:'long',day:'numeric',month:'long'})+'.',id);
+  if(mp)await bgSay((await mp)||'Non riesco a recuperare il meteo: controlla la città nelle impostazioni.',id);
+  if(BG.rip){const o=S.rep.filter(i=>i.s!=='consegnata'),u=sorted().filter(i=>i.s!=='consegnata'&&i.pr==='rosso'),pr=o.filter(i=>i.s==='pronta');
+    if(!o.length)await bgSay('Non ci sono riparazioni aperte.',id);
+    else{await bgSay('Hai '+o.length+(o.length===1?' riparazione aperta':' riparazioni aperte')+(u.length?', di cui '+u.length+(u.length===1?' urgente':' urgenti')+': '+u.slice(0,3).map(i=>i.c+(i.d?', '+i.d:'')).join('; ')+'.':', nessuna urgente.'),id);
+      if(pr.length)await bgSay('Pronte da consegnare: '+pr.slice(0,5).map(i=>i.c).join(', ')+'.',id)}}
+  if(BG.buy)await bgSay(S.buy.length?'Da ordinare: '+S.buy.slice(0,6).map(i=>i.t).join(', ')+(S.buy.length>6?' e altri '+(S.buy.length-6):'')+'.':'Non c’è niente da ordinare.',id);
+  if(BG.sc){const ML=mlGet();if(ML){const low=ML.filter(x=>x.qty<=x.min);if(low.length)await bgSay(low.length+(low.length===1?' articolo sotto scorta: ':' articoli sotto scorta: ')+low.slice(0,4).map(x=>x.desc).join(', ')+'.',id)}}
+  if(id===bgId)await bgSay('Questo è tutto. Buon lavoro.',id);
+}
+$('bgb').onclick=buongiorno;
+['meteo','rip','buy','sc'].forEach(k=>$('bg-'+k).onchange=()=>{BG[k]=$('bg-'+k).checked?1:0;bgSave()});
+$('bg-city').oninput=()=>{BG.city=$('bg-city').value.trim()||'Napoli';bgSave()};
+$('gear').addEventListener('click',()=>{['meteo','rip','buy','sc'].forEach(k=>$('bg-'+k).checked=!!BG[k]);$('bg-city').value=BG.city});
+
+/* ===== Da Nexus: preventivo, WhatsApp, backup ===== */
+async function quote(i){
+  $('reply').textContent='Preparo il preventivo…';
+  try{i.prev=await ai('Sei il tecnico di Techandbet, negozio di riparazioni in Italia. Scrivi una bozza di preventivo breve in italiano: lavorazione, ricambi probabili, forchetta di prezzo in euro (indicativa, da confermare dopo la diagnosi) e tempi stimati. Non inventare codici ricambio.',[{role:'user',content:'Dispositivo: '+(i.d||'n/d')+'. Problema: '+(i.p||'n/d')+'.'}],500);save();render();speak('Bozza di preventivo pronta per '+i.c+'. La trovi sulla scheda.')}catch(e){speak(errMsg(e))}
+}
+function wa(i){
+  const n=(i.tel||'').replace(/\D/g,'');if(!n){speak('Manca il telefono di '+i.c+'. Aprilo con Modifica.');return}
+  const d=i.d||'dispositivo',txt='Ciao '+cap(i.c)+', ti scrivo da Techandbet: '+(i.s==='pronta'?'la riparazione ('+d+') è pronta, puoi passare a ritirarla.':'la riparazione ('+d+') è in lavorazione, ti aggiorniamo appena è pronta.');
+  window.open('https://wa.me/'+(n.length<=10?'39'+n:n)+'?text='+encodeURIComponent(txt),'_blank');speak('Apro WhatsApp per '+i.c+'.');
+}
+function backup(){const {gkey,...C}=CFG,a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify({S,CFG:C,BG},null,2)],{type:'application/json'}));a.download='jarvis-backup-'+new Date().toISOString().slice(0,10)+'.json';a.click()}
+$('bk-out').onclick=backup;
+$('bk-in').onchange=async e=>{const f=e.target.files[0];if(!f)return;try{const o=JSON.parse(await f.text());if(o.S){S=Object.assign({buy:[],rep:[],teach:[]},o.S);save()}if(o.CFG){Object.assign(CFG,o.CFG);localStorage.setItem('jarvis-cfg',JSON.stringify(CFG))}if(o.BG){Object.assign(BG,o.BG);bgSave()}applyCfg();render();renderTeach();speak('Backup importato.')}catch(x){speak('File di backup non valido.')}};
+
+/* ===== HUD 3D: rete di neuroni ===== */
+const NX={ok:false,acc:0,t:0};
+function nxInit(){
+  if(NX.ok||!window.THREE)return;
+  try{
+    const T3=THREE,V=T3.Vector3,AD=T3.AdditiveBlending,rnd=(a,b)=>a+Math.random()*(b-a),jv=s=>new V(rnd(-s,s),rnd(-s,s),rnd(-s,s));
+    const R=new T3.WebGLRenderer({canvas:$('cv3'),antialias:true,alpha:true});R.setPixelRatio(Math.min(devicePixelRatio||1,2));
+    const sc=new T3.Scene(),cam=new T3.PerspectiveCamera(50,1,.1,60),G=new T3.Group();sc.add(G);
+    const c2=document.createElement('canvas');c2.width=c2.height=64;const g2=c2.getContext('2d'),gr=g2.createRadialGradient(32,32,0,32,32,32);
+    gr.addColorStop(0,'rgba(255,255,255,1)');gr.addColorStop(.3,'rgba(255,255,255,.3)');gr.addColorStop(1,'rgba(255,255,255,0)');g2.fillStyle=gr;g2.fillRect(0,0,64,64);
+    const tex=new T3.CanvasTexture(c2),col=new T3.Color(0x3fd0ff),mats=[],spm=()=>{const m=new T3.SpriteMaterial({map:tex,color:col.clone(),blending:AD,transparent:true,depthWrite:false});mats.push(m);return m};
+    const P=[];while(P.length<16){const p=jv(1);p.y*=.8;if(p.length()>1)continue;p.multiplyScalar(4.2);if(P.every(q=>q.distanceTo(p)>1.5))P.push(p)}
+    const lg=[],lc=[],ne=[];
+    P.forEach(p=>{
+      const som=new T3.Mesh(new T3.IcosahedronGeometry(.16,2),new T3.MeshBasicMaterial({color:0xbff0ff})),pa=som.geometry.attributes.position;som.position.copy(p);
+      for(let k=0;k<pa.count;k++){const x=pa.getX(k),y=pa.getY(k),z=pa.getZ(k),s=1+.14*Math.sin(x*38)*Math.sin(y*38+1)*Math.sin(z*38+2);pa.setXYZ(k,x*s,y*s,z*s)}
+      const spr=new T3.Sprite(spm());spr.position.copy(p);G.add(som,spr);
+      const br=(o,d,l,dp)=>{if(dp>3)return;const e=o.clone().addScaledVector(d,l),a=1-dp*.22;lg.push(o.x,o.y,o.z,e.x,e.y,e.z);lc.push(a,a,a,a*.55,a*.55,a*.55);for(let j=0;j<2;j++)br(e,d.clone().add(jv(.7)).normalize(),l*.68,dp+1)};
+      for(let j=5+Math.floor(Math.random()*3);j>0;j--)br(p,jv(1).normalize(),rnd(.45,.8),0);
+      ne.push({p,f:0,som,spr,ax:[]})});
+    const lgeo=new T3.BufferGeometry();lgeo.setAttribute('position',new T3.Float32BufferAttribute(lg,3));lgeo.setAttribute('color',new T3.Float32BufferAttribute(lc,3));
+    const dm=new T3.LineBasicMaterial({vertexColors:true,color:col.clone(),transparent:true,opacity:.55,blending:AD,depthWrite:false});mats.push(dm);G.add(new T3.LineSegments(lgeo,dm));
+    ne.forEach((n,i)=>{ne.map((m,j)=>[j,m.p.distanceTo(n.p)]).filter(x=>x[0]!==i).sort((a,b)=>a[1]-b[1]).slice(0,2+i%2).forEach(([j])=>{
+      const a=n.p,b=ne[j].p,m=a.clone().lerp(b,.5).add(jv(.7)),c=new T3.CatmullRomCurve3([a.clone(),a.clone().lerp(m,.5).add(jv(.25)),m,m.clone().lerp(b,.5).add(jv(.25)),b.clone()]);
+      const am=new T3.LineBasicMaterial({color:col.clone(),transparent:true,opacity:.7,blending:AD,depthWrite:false});mats.push(am);
+      G.add(new T3.Line(new T3.BufferGeometry().setFromPoints(c.getPoints(48)),am));
+      const sp=new T3.Sprite(spm());sp.scale.setScalar(.5);sp.visible=false;G.add(sp);n.ax.push({c,to:j,ph:-1,sp,len:c.getLength()})})});
+    const dp=new Float32Array(1050);for(let i=0;i<1050;i+=3){const v=jv(1).normalize().multiplyScalar(rnd(4,9));dp[i]=v.x;dp[i+1]=v.y;dp[i+2]=v.z}
+    const dg=new T3.BufferGeometry();dg.setAttribute('position',new T3.BufferAttribute(dp,3));const dpm=new T3.PointsMaterial({color:col.clone(),size:.04,transparent:true,opacity:.5,blending:AD,depthWrite:false});mats.push(dpm);G.add(new T3.Points(dg,dpm));
+    Object.assign(NX,{ok:true,R,sc,cam,G,ne,col,mats});
+    $('cv3').style.display='block';$('cv').style.display='none';$('cv3').onclick=()=>$('mic').click();
+  }catch(e){NX.ok=false}
+}
+function nxSize(){const w=$('cv3').clientWidth,h=$('cv3').clientHeight;if(!w||!h)return;NX.R.setSize(w,h,false);NX.cam.aspect=w/h;NX.cam.updateProjectionMatrix()}
+function nxFire(i){const n=NX.ne[i];if(n.f>.5)return;n.f=1;n.ax.forEach(a=>{if(a.ph<0)a.ph=0})}
+function nxFrame(t){
+  t*=.001;const dt=Math.min(.05,t-(NX.t||t));NX.t=t;
+  const st=hudState(),Z={idle:[1.3,.5,.35],listen:[.55,.8,.45],think:[.12,1.4,.55],speak:[.2,1,.5]}[st];
+  NX.col.lerp(new THREE.Color({speak:0x38d996,think:0x9a8cff,listen:0xffb020,idle:0x3fd0ff}[st]),.05);
+  NX.mats.forEach(m=>m.color.copy(NX.col));
+  NX.acc+=dt;if(NX.acc>Z[0]){NX.acc=0;nxFire(Math.floor(Math.random()*NX.ne.length))}
+  NX.ne.forEach(n=>{n.f*=.95;n.spr.scale.setScalar(.8+n.f*2.4);n.som.scale.setScalar(1+n.f*.45);
+    n.ax.forEach(a=>{if(a.ph<0)return;a.ph+=dt*Z[1]*2.4/a.len;
+      if(a.ph>=1){a.ph=-1;a.sp.visible=false;if(Math.random()<Z[2])nxFire(a.to);else NX.ne[a.to].f=Math.max(NX.ne[a.to].f,.6);return}
+      a.sp.visible=true;a.sp.position.copy(a.c.getPoint(a.ph))})});
+  const w=$('cv3').clientWidth/($('cv3').clientHeight||1);
+  NX.G.rotation.y=t*.07;NX.G.rotation.x=Math.sin(t*.11)*.18;NX.cam.position.set(0,0,w<.8?15:11);NX.R.render(NX.sc,NX.cam);
+}
+
+/* Tono di voce */
+const TONI={
+  'Friday':{pitch:1.1,rate:1.05,style:'friday'},
+  'Jarvis classico':{pitch:0.8,rate:0.95,style:'ironico'},
+  'Naturale':{pitch:1,rate:1,style:'amichevole'},
+  'Professionale':{pitch:0.95,rate:1,style:'formale'},
+  'Calmo':{pitch:0.9,rate:0.85,style:'amichevole'},
+  'Veloce':{pitch:1,rate:1.3,style:'amichevole'},
+  'Vivace':{pitch:1.3,rate:1.1,style:'amichevole'},
+  'Robotico':{pitch:0.5,rate:0.9,style:'formale'}
+};
+function toneSel(){
+  const sel=$('tone');sel.textContent='';
+  Object.keys(TONI).forEach(k=>sel.add(new Option(k,k)));sel.add(new Option('Personalizzato','_'));
+  const m=Object.keys(TONI).find(k=>{const x=TONI[k];return x.pitch===CFG.pitch&&x.rate===CFG.rate&&x.style===CFG.style});
+  sel.value=m||'_';
+}
+function setTone(k){
+  const x=TONI[k];if(!x)return;
+  Object.assign(CFG,x);
+  try{localStorage.setItem('jarvis-cfg',JSON.stringify(CFG))}catch(e){}
+  toneSel();speak('Tono '+k.toLowerCase()+' attivato. Così suona la mia voce.');
+}
+$('tone').onchange=()=>{if($('tone').value!=='_')setTone($('tone').value)};
+toneSel();
+
+/* HUD */
+const hud=$('hud'),cv=$('cv'),cx=cv.getContext('2d');
+let hudOn=false,pts=[],raf=0,ang=0,env=0,hudTimer=0;
+function hudInit(){pts=[];for(let i=0;i<90;i++){const u=Math.random()*2-1,a=Math.random()*6.283,r=Math.sqrt(1-u*u);pts.push({x:r*Math.cos(a),y:u,z:r*Math.sin(a),p:Math.random()*6.28})}}
+function hudSize(){if(NX.ok){nxSize();return}const d=devicePixelRatio||1;cv.width=cv.clientWidth*d;cv.height=cv.clientHeight*d}
+function hudState(){const r=$('reply').textContent;return talking?'speak':(r==='…'||r==='Cerco soluzioni…')?'think':on?'listen':'idle'}
+function hudFrame(t){
+  if(!hudOn)return;
+  if(NX.ok){nxFrame(t);raf=requestAnimationFrame(hudFrame);return}
+  const st=hudState(),W=cv.width,H=cv.height,d=devicePixelRatio||1,R=Math.min(W,H)*0.34;
+  const col=st==='listen'?'255,176,32':'63,208,255';
+  const target=st==='speak'?0.55+0.45*Math.abs(Math.sin(t/110)*Math.sin(t/37)):st==='listen'?0.35:st==='think'?0.5:0.12;
+  env+=(target-env)*0.15;ang+=st==='think'?0.02:0.004+env*0.01;
+  cx.clearRect(0,0,W,H);
+  const ca=Math.cos(ang),sa=Math.sin(ang);
+  const P=pts.map(p=>{const x=p.x*ca+p.z*sa,z=-p.x*sa+p.z*ca,k=1/(1.8-z*0.5),q=1+env*0.12*Math.sin(t/180+p.p);return{x:W/2+x*R*k*q,y:H/2+p.y*R*k*q,a:0.25+0.5*(z+1)/2,p:p.p}});
+  cx.lineWidth=d;const L=R*0.42;
+  for(let i=0;i<P.length;i++)for(let j=i+1;j<P.length;j++){const q=Math.hypot(P[i].x-P[j].x,P[i].y-P[j].y);if(q<L){cx.strokeStyle='rgba('+col+','+((1-q/L)*0.35*(0.4+env)).toFixed(3)+')';cx.beginPath();cx.moveTo(P[i].x,P[i].y);cx.lineTo(P[j].x,P[j].y);cx.stroke()}}
+  P.forEach(p=>{const g=0.5+0.5*Math.sin(t/400+p.p);cx.fillStyle='rgba('+col+','+Math.min(1,p.a+g*env).toFixed(2)+')';cx.beginPath();cx.arc(p.x,p.y,(1.5+g*1.5+env*2)*d,0,6.283);cx.fill()});
+  for(let k=0;k<3;k++){const ph=(t/1800+k/3)%1;cx.strokeStyle='rgba('+col+','+((1-ph)*0.35*(0.3+env)).toFixed(3)+')';cx.beginPath();cx.arc(W/2,H/2,R*(0.5+ph*0.9)*(1+env*0.1),0,6.283);cx.stroke()}
+  raf=requestAnimationFrame(hudFrame);
+}
+function brief(){
+  const h=new Date().getHours(),g=h<12?'Buongiorno':h<18?'Buon pomeriggio':'Buonasera',o=S.rep.filter(i=>i.s!=='consegnata'),u=o.filter(i=>i.pr==='rosso').length;
+  return g+' '+(CFG.style==='ironico'?'signore':CFG.style==='friday'?'capo':CFG.call)+'. '+(o.length?o.length+(o.length===1?' riparazione aperta':' riparazioni aperte')+(u?', di cui '+u+(u===1?' urgente':' urgenti'):'')+'.':'Nessuna riparazione aperta.')+(S.buy.length?' '+S.buy.length+' articoli da ordinare.':'');
+}
+let lastTaught=0;
+function hudKnow(){
+  const n=S.teach.length;
+  $('h-know').textContent=Date.now()-lastTaught<5000?'Risposta insegnata':'Conoscenze: '+n+(n?' · '+S.teach.slice(-3).map(x=>'“'+x.q+'”').join(' '):'');
+}
+function hudStats(){
+  const o=S.rep.filter(i=>i.s!=='consegnata'),sy=[!!SR,!!KEY,true,on].filter(Boolean).length;
+  const c=[[S.rep.length+S.buy.length+S.teach.length,'neuroni'],[sy,'sistemi attivi'],[3,'agenti pronti'],[o.filter(i=>i.pr==='rosso').length,'urgenti']];
+  $('h-stats').innerHTML=c.map(x=>'<div><b>'+x[0]+'</b><span>'+x[1]+'</span></div>').join('');const HL=$('h-list');HL.textContent='';sorted().filter(i=>i.s!=='consegnata').slice(0,3).forEach(i=>{const d=document.createElement('div');d.textContent=(i.pr==='rosso'?'● ':i.pr==='verde'?'○ ':'◐ ')+cap(i.c)+' · '+(i.d||'?')+' · '+i.s;HL.appendChild(d)});
+}
+function openHud(){
+  if(hudOn)return;hudOn=true;hud.hidden=false;nxInit();hudSize();if(!pts.length)hudInit();
+  $('h-hello').textContent=CFG.name.toUpperCase()+' · ONLINE';hudStats();hudKnow();
+  hudTimer=setInterval(()=>{hudStats();hudKnow();$('h-heard').textContent=$('heard').textContent;$('h-reply').textContent=$('reply').textContent.slice(0,260)},300);
+  raf=requestAnimationFrame(hudFrame);speak(brief());
+}
+function closeHud(){hudOn=false;hud.hidden=true;clearInterval(hudTimer);cancelAnimationFrame(raf)}
+$('hudb').onclick=openHud;$('h-x').onclick=closeHud;cv.onclick=()=>$('mic').click();
+window.addEventListener('resize',()=>{if(hudOn)hudSize()});
+function saveSettings(final){
+  try{
+  Object.assign(CFG,{name:$('s-name').value.trim()||'Jarvis',alias:$('s-alias').value.trim(),call:$('s-call').value.trim()||'Alessandro',style:$('s-style').value,extra:$('s-extra').value.trim(),voice:$('s-voice').value,rate:+$('s-rate').value,pitch:+$('s-pitch').value,model:$('s-model').value,theme:$('s-theme').value,rp:$('s-rp').checked,provider:$('s-prov').value,gmodel:$('gmodel').value.trim()||'gemini-3.1-flash-lite-preview'});const gk=$('gkey').value.trim();if(gk)CFG.gkey=gk;if(gk&&!KEY&&!$('key').value.trim())CFG.provider='gemini';
+  try{localStorage.setItem('jarvis-cfg',JSON.stringify(CFG))}catch(x){}
+  const k=$('key').value.trim();if(k.startsWith('AIza')){CFG.gkey=k;CFG.provider='gemini';try{localStorage.setItem('jarvis-cfg',JSON.stringify(CFG))}catch(x){}}else if(k){KEY=k;try{localStorage.setItem('jarvis-key',KEY)}catch(x){}}
+  const ek=$('el-key').value.trim();if(ek)EL.key=ek;EL.vid=$('el-vid').value.trim();EL.on=$('el-on').checked;EL.hudOnly=$('el-hud').checked;EL.model=$('el-model').value;try{localStorage.setItem('jarvis-el',JSON.stringify(EL))}catch(x){}
+  applyCfg();toneSel();if(RPon())rpLoad();else S.rep=S.rep.filter(i=>!i.rid);render();
+  $('key').value='';$('gkey').value='';$('el-key').value='';updKeys();
+  $('sv').textContent='✓ Salvato alle '+new Date().toLocaleTimeString('it-IT');
+  if(final){$('sdlg').close();speak('Impostazioni salvate.')}
+  }catch(err){$('sv').textContent='Errore nel salvataggio: '+err.message}
+}
+function updKeys(){
+  $('gkey').placeholder=CFG.gkey?'✓ Salvata (…'+CFG.gkey.slice(-4)+'). Vuoto = non cambiarla':'Incolla qui la chiave';
+  $('key').placeholder=KEY?'✓ Salvata (…'+KEY.slice(-4)+'). Vuoto = non cambiarla':'sk-ant-…';
+  $('el-key').placeholder=EL.key?'✓ Salvata (…'+EL.key.slice(-4)+'). Vuoto = non cambiarla':'Incolla qui la chiave';
+}
+$('sf').onsubmit=e=>{e.preventDefault();saveSettings(true)};
+$('s-save').onclick=()=>saveSettings(true);
+$('sf').addEventListener('change',()=>saveSettings(false));
+applyCfg();
+try{localStorage.setItem('jarvis-t','1');if(localStorage.getItem('jarvis-t')!=='1')throw 0;localStorage.removeItem('jarvis-t')}catch(e){$('reply').textContent='Attenzione: questo browser non salva i dati (navigazione privata o cancellazione alla chiusura). Chiavi e riparazioni andranno perse.'}
+try{navigator.storage&&navigator.storage.persist&&navigator.storage.persist()}catch(e){}
+if(RPon())rpLoad();
+$('f').onsubmit=e=>{e.preventDefault();const v=$('txt').value.trim();if(v){run(v);$('txt').value=''}};
+render();
+
+$('rp-diag').onclick=()=>{
+  let ml=null,rl=null;try{ml=JSON.parse(localStorage.getItem('rp_ml'))}catch(e){}try{rl=JSON.parse(localStorage.getItem('rp_rl'))}catch(e){}
+  const k=[];for(let i=0;i<localStorage.length;i++)k.push(localStorage.key(i));
+  const r=['Indirizzo di questa pagina:\n'+location.origin+location.pathname,'','Magazzino (rp_ml): '+(Array.isArray(ml)?ml.length+' articoli trovati':'NON trovato'),'Riparazioni (rp_rl): '+(Array.isArray(rl)?rl.length+' schede trovate':'NON trovate'),'','Chiavi presenti su questo indirizzo:\n'+(k.join(', ')||'nessuna')];
+  if(location.protocol==='file:')r.push('','Stai aprendo il file dal computer: i due programmi non condividono i dati. Caricali entrambi su GitHub Pages, sotto lo stesso indirizzo utente.github.io.');
+  else if(!Array.isArray(ml)&&!Array.isArray(rl))r.push('','RepairPro qui non ha salvato nulla: aprilo almeno una volta da questo stesso indirizzo (utente.github.io), poi riprova.');
+  alert(r.join('\n'));
+};
+</script>
+</body>
+</html>
