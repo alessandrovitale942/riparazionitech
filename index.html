@@ -183,6 +183,13 @@ button:focus-visible,.inp:focus-visible{outline:2px solid var(--amber);outline-o
 .jv-frame iframe{width:100%;height:100%;border:0;display:block}
 .jv-full{position:fixed;inset:12px;z-index:90;margin:0;display:flex;flex-direction:column;box-shadow:0 30px 90px rgba(0,0,0,.7)}
 .jv-full .jv-frame{flex:1;height:auto}
+.jv-bg{position:fixed;left:-2000px;top:0;width:900px;height:640px;opacity:0;pointer-events:none;border:0}
+.jv-live{margin-top:10px;font-size:14px}
+.jv-h{color:#7fb6ff}
+.jv-r{color:#eef1f6;margin-top:6px;white-space:pre-wrap;max-height:160px;overflow:auto}
+.jv-listen .jv-orb{animation:jvp 1.3s ease-in-out infinite}
+@keyframes jvp{50%{box-shadow:0 0 0 12px rgba(91,140,255,.14),0 0 44px rgba(60,160,255,.9)}}
+@media(prefers-reduced-motion:reduce){.jv-listen .jv-orb{animation:none}}
 .jv-err{padding:48px 24px;text-align:center;color:#c6ccd8}
 .jv-err p{margin:8px auto 16px;color:var(--mute);font-size:13px;max-width:420px}
 @media(prefers-reduced-motion:reduce){.hero-bar i{animation:none}}
@@ -233,9 +240,10 @@ button:focus-visible,.inp:focus-visible{outline:2px solid var(--amber);outline-o
   <div class="card jv" id="jv-card">
     <div class="jv-bar">
       <div class="jv-orb"></div>
-      <div class="jv-txt"><div class="jv-t">Jarvis</div><div class="jv-s" id="jv-line">Il tuo assistente vocale, collegato alle schede e al magazzino.</div></div>
+      <div class="jv-txt"><div class="jv-t">Jarvis</div><div class="jv-s" id="jv-line">Il tuo assistente vocale, collegato alle schede e al magazzino.</div><div class="jv-live" id="jv-live" style="display:none"><div class="jv-h" id="jv-heard"></div><div class="jv-r" id="jv-reply"></div></div></div>
       <button class="btn btn-g" id="jv-max" onclick="jvMax()" style="display:none">Schermo intero</button>
-      <button class="btn btn-p" id="jv-open" onclick="jvToggle()">Parla con Jarvis</button>
+      <button class="btn btn-g" id="jv-screen" onclick="jvToggle()">Apri schermata</button>
+      <button class="btn btn-p" id="jv-open" onclick="jvVoce()">Parla con Jarvis</button>
     </div>
     <div class="jv-frame" id="jv-frame" style="display:none"></div>
   </div>
@@ -2159,7 +2167,7 @@ function jvCarica(box, onFrame) {
   box.innerHTML = '<div class="jv-err">Carico Jarvis...</div>';
   fetch(url, { method: 'HEAD', cache: 'no-store' }).then(function(r) {
     if (r.ok) monta();
-    else box.innerHTML = '<div class="jv-err"><b>Non trovo Jarvis</b><p>Il file "' + url + '" non e nel sito. Caricalo nella stessa cartella di index.html, oppure indica dove si trova.</p><button class="btn btn-p btn-sm" onclick="jvImposta()">Indica dove si trova Jarvis</button></div>';
+    else (box.classList.remove('jv-bg'), box.style.display = 'block', box.innerHTML = '<div class="jv-err"><b>Non trovo Jarvis</b><p>Il file "' + url + '" non e nel sito. Caricalo nella stessa cartella di index.html, oppure indica dove si trova.</p><button class="btn btn-p btn-sm" onclick="jvImposta()">Indica dove si trova Jarvis</button></div>');
   }).catch(monta);
 }
 function jvImposta() {
@@ -2177,19 +2185,51 @@ function jvImp() {
   else jvCarica(box, function(ifr) { ifr.addEventListener('load', function() { apriDialog(ifr); }); });
 }
 
+var jvPoll = null;
+function jvMic(ifr, avvia) {
+  try {
+    var mic = ifr.contentDocument.getElementById('mic');
+    if (!avvia || !mic.classList.contains('live')) mic.click();
+  } catch (e) {}
+}
+function jvSpia(ifr) {
+  clearInterval(jvPoll);
+  jvPoll = setInterval(function() {
+    try {
+      var d = ifr.contentDocument, live = d.getElementById('mic').classList.contains('live');
+      document.getElementById('jv-card').classList.toggle('jv-listen', live);
+      document.getElementById('jv-open').textContent = live ? 'Smetti di ascoltare' : 'Parla con Jarvis';
+      document.getElementById('jv-heard').textContent = d.getElementById('heard').textContent;
+      var rp = d.getElementById('reply').textContent;
+      document.getElementById('jv-reply').textContent = rp === '\u2026' ? 'Ci penso...' : rp;
+    } catch (e) { clearInterval(jvPoll); }
+  }, 300);
+}
+// Parla con Jarvis: carica Jarvis nascosto e accende subito il microfono
+function jvVoce() {
+  var f = document.getElementById('jv-frame'), ifr = f.querySelector('iframe');
+  if (ifr) { jvMic(ifr); return; }
+  f.className = 'jv-frame jv-bg'; f.style.display = 'block';
+  document.getElementById('jv-live').style.display = '';
+  jvCarica(f, function(i) { i.addEventListener('load', function() { jvMic(i, true); jvSpia(i); }); });
+}
+function jvStop() {
+  var f = document.getElementById('jv-frame'), m = document.getElementById('jv-max');
+  clearInterval(jvPoll); f.innerHTML = ''; f.className = 'jv-frame'; f.style.display = 'none';
+  m.style.display = 'none'; m.textContent = 'Schermo intero';
+  document.getElementById('jv-card').classList.remove('jv-full', 'jv-listen');
+  document.getElementById('jv-live').style.display = 'none';
+  document.getElementById('jv-open').textContent = 'Parla con Jarvis';
+  document.getElementById('jv-screen').textContent = 'Apri schermata';
+}
+// Apri schermata: mostra l'interfaccia completa di Jarvis (o la chiude)
 function jvToggle() {
-  var f = document.getElementById('jv-frame'), b = document.getElementById('jv-open'), m = document.getElementById('jv-max');
-  var apri = f.style.display === 'none';
-  if (apri) {
-    jvCarica(f);
-  } else {
-    f.innerHTML = '';
-    document.getElementById('jv-card').classList.remove('jv-full');
-    m.textContent = 'Schermo intero';
-  }
-  f.style.display = apri ? 'block' : 'none';
-  m.style.display = apri ? '' : 'none';
-  b.textContent = apri ? 'Chiudi Jarvis' : 'Parla con Jarvis';
+  var f = document.getElementById('jv-frame'), b = document.getElementById('jv-screen'), m = document.getElementById('jv-max');
+  if (f.style.display === 'none' || f.classList.contains('jv-bg')) {
+    if (!f.querySelector('iframe')) jvCarica(f);
+    f.classList.remove('jv-bg'); f.style.display = 'block'; m.style.display = '';
+    b.textContent = 'Chiudi schermata';
+  } else jvStop();
 }
 function jvMax() {
   var c = document.getElementById('jv-card');
