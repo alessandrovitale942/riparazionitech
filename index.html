@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="it">
 <head>
+<script src="cloud.js"></script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>RepairPro</title>
@@ -246,6 +247,7 @@ button:focus-visible,.inp:focus-visible{outline:2px solid var(--amber);outline-o
     <button class="nav-btn"    onclick="toggleN()">&#128276; Notifiche <span id="nb-cnt" style="background:#ff8800;color:#000;font-size:10px;font-weight:700;border-radius:10px;padding:1px 6px;margin-left:auto;display:none">0</span></button>
     <button class="nav-btn"    id="nb-impostazioni" onclick="vai('impostazioni',this)">&#9881; Impostazioni</button>
     <button class="nav-btn"    id="nb-jarvisimp"    onclick="vai('jarvisimp',this);jvImp()">&#127897; Impostazioni Jarvis</button>
+    <button class="nav-btn"    id="nb-logout"       onclick="window.rpLogout&&rpLogout()" style="display:none">&#128682; Esci</button>
   </nav>
 </aside>
 
@@ -1904,7 +1906,7 @@ function schemaSVG(schemaStr) {
 }
 
 function box(lbl, val) {
-  return '<div style="padding:3px 0 3px 12px;border-left:3px solid #ffd2b0">'
+  return '<div style="padding:3px 0 3px 12px;border-left:3px solid #14171d">'
     + '<div style="font-size:11px;color:#8a8f9c;margin-bottom:2px">' + lbl + '</div>'
     + '<div style="font-weight:700;font-size:14px;color:#14171d;word-break:break-word">' + (val || '-') + '</div></div>';
 }
@@ -1933,12 +1935,12 @@ function apriScheda(id) {
   var html = '<div style="background:white;color:#111;font-family:Arial,sans-serif;padding:26px 24px;border-radius:14px;border-top:8px solid #ff7a1a">'
     + '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;padding-bottom:12px;border-bottom:3px solid #ff5500">'
       + '<div>'
-        + '<div style="display:flex;align-items:center;gap:12px"><div style="width:44px;height:44px;border-radius:12px;background:#14171d;color:#ff9a4d;font:800 22px Syne,Arial,sans-serif;display:flex;align-items:center;justify-content:center">' + String(SET.nome || 'R').charAt(0).toUpperCase() + '</div><div style="font-size:22px;font-weight:800;color:#14171d;font-family:Syne,Arial,sans-serif">' + SET.nome + '</div></div>'
+        + '<div style="display:flex;align-items:center;gap:12px"><div style="width:44px;height:44px;border-radius:12px;background:#fff;border:2px solid #14171d;color:#14171d;font:800 22px Syne,Arial,sans-serif;display:flex;align-items:center;justify-content:center">' + String(SET.nome || 'R').charAt(0).toUpperCase() + '</div><div style="font-size:22px;font-weight:800;color:#14171d;font-family:Syne,Arial,sans-serif">' + SET.nome + '</div></div>'
         + '<div style="font-size:11px;color:#999">' + (SET.slogan || '') + (SET.ind ? ' - ' + SET.ind : '') + '</div>'
       + '</div>'
       + '<div style="text-align:right">'
         + '<div style="font-size:22px;font-weight:800;color:#14171d;font-family:Syne,Arial,sans-serif">Scheda n. ' + String(r.id).padStart(4, '0') + '</div>'
-        + '<div style="margin:4px 0"><span style="display:inline-block;padding:3px 12px;border-radius:20px;font-size:11px;font-weight:700;color:#fff;background:' + ({'Pronto':'#16a34a','Consegnato':'#2563eb','In lavorazione':'#ea580c'}[r.stato] || '#6b7280') + '">' + (r.stato || 'Ricevuta') + '</span></div>'
+        + '<div style="margin:4px 0"><span style="display:inline-block;padding:2px 12px;border-radius:20px;font-size:11px;font-weight:700;color:#14171d;background:#fff;border:2px solid ' + ({'Pronto':'#16a34a','Consegnato':'#2563eb','In lavorazione':'#ea580c'}[r.stato] || '#6b7280') + '">' + (r.stato || 'Ricevuta') + '</span></div>'
         + '<div style="font-size:12px;color:#999">' + r.data + '</div>'
         + (r.consegna ? '<div style="font-size:12px;color:#ff5500;font-weight:600">Consegna: ' + r.consegna + '</div>' : '')
         + (r.dataConsegnato ? '<div style="font-size:12px;font-weight:700;color:#22c55e">&#10003; Consegnato il: ' + r.dataConsegnato + '</div>' : '')
@@ -1954,9 +1956,9 @@ function apriScheda(id) {
       + box('Tipo Intervento', r.tipo) + box('Condizione Estetica', r.estetica) + box('Accessori', r.accessori)
     + '</div>'
     + '<div style="display:grid;grid-template-columns:1fr;gap:9px;margin-bottom:12px">'
-      + '<div style="background:#14171d;padding:14px 20px;border-radius:12px;display:flex;justify-content:space-between;align-items:center">'
-        + '<div style="font-size:13px;color:#aab1c0">Preventivo</div>'
-        + '<div style="font-weight:800;font-size:28px;color:#ff9a4d;font-family:Syne,Arial,sans-serif">' + (r.costo ? 'EUR ' + parseFloat(r.costo).toFixed(2) : 'Da definire') + '</div>'
+      + '<div style="background:#fff;border:3px solid #14171d;padding:12px 20px;border-radius:12px;display:flex;justify-content:space-between;align-items:center">'
+        + '<div style="font-size:14px;font-weight:700;color:#14171d">Preventivo</div>'
+        + '<div style="font-weight:800;font-size:28px;color:#000;font-family:Syne,Arial,sans-serif">' + (r.costo ? 'EUR ' + parseFloat(r.costo).toFixed(2) : 'Da definire') + '</div>'
       + '</div>'
     + '</div>'
     + sbl
@@ -2220,45 +2222,88 @@ function jvBoot() {
   b.classList.add('on');
   setTimeout(function() { b.classList.remove('on'); }, 2600);
 }
-var jvPoll = null;
-function jvMic(ifr, avvia) {
+var jvPoll = null, jvRec = null, jvCoda = null, jvUsed = false;
+function jvStato() {
+  document.getElementById('jv-card').classList.toggle('jv-listen', !!jvRec);
+  document.getElementById('jv-open').textContent = jvRec ? 'Smetti di ascoltare' : 'Parla con Jarvis';
+}
+// manda a Jarvis (nascosto) il testo gia capito; se sta ancora caricando, lo tiene in attesa
+function jvInvia(txt) {
+  jvUsed = true;
+  document.getElementById('jv-heard').textContent = '\u201C' + txt + '\u201D';
+  var ifr = document.querySelector('#jv-frame iframe');
   try {
-    var mic = ifr.contentDocument.getElementById('mic');
-    if (!avvia || !mic.classList.contains('live')) mic.click();
-  } catch (e) {}
+    if (ifr && ifr.contentWindow && typeof ifr.contentWindow.run === 'function') {
+      var pr = ifr.contentWindow.run(txt);
+      if (pr && pr.catch) pr.catch(function(e) { document.getElementById('jv-reply').textContent = 'Errore: ' + e.message; });
+      return;
+    }
+  } catch (e) {
+    document.getElementById('jv-reply').textContent = 'Dashboard e Jarvis non riescono a parlarsi: ' + (location.protocol === 'file:' ? 'stai aprendo i file dal computer. Aprili dal sito online (https) oppure con un server locale.' : e.message);
+    return;
+  }
+  jvCoda = txt;
+}
+function jvAscolta() {
+  var SR = window.SpeechRecognition || window.webkitSpeechRecognition, h = document.getElementById('jv-heard');
+  document.getElementById('jv-live').style.display = '';
+  if (!SR) { h.textContent = 'Questo browser non ha il riconoscimento vocale (Firefox e altri non lo supportano): su PC usa Chrome o Edge.'; return; }
+  var r = new SR(); jvRec = r;
+  r.lang = 'it-IT'; r.interimResults = true; r.continuous = false;
+  r.onresult = function(e) {
+    var interim = '';
+    for (var k = e.resultIndex; k < e.results.length; k++) {
+      var res = e.results[k], txt = res[0].transcript.trim();
+      if (!res.isFinal) { interim += txt + ' '; continue; }
+      if (txt) jvInvia(txt);
+    }
+    if (interim) h.textContent = 'Sento: ' + interim.trim();
+  };
+  r.onerror = function(e) {
+    var m = { 'not-allowed': 'Microfono bloccato: clicca il lucchetto accanto all\u2019indirizzo e consenti il microfono, poi ricarica.', 'service-not-allowed': 'Riconoscimento vocale non disponibile su questo browser.', 'audio-capture': 'Non trovo nessun microfono.', 'network': 'Il riconoscimento vocale richiede internet (in Brave e in alcuni browser e disattivato: usa Chrome o Edge).', 'no-speech': 'Non ho sentito nulla: riprova.' }[e.error];
+    if (m) h.textContent = m; else if (e.error !== 'aborted') h.textContent = 'Errore microfono: ' + e.error;
+  };
+  r.onend = function() { if (jvRec === r) jvRec = null; jvStato(); };
+  try { r.start(); h.textContent = 'Ti ascolto... parla ora'; } catch (x) { jvRec = null; h.textContent = 'Non riesco ad avviare il microfono.'; }
+  jvStato();
 }
 function jvSpia(ifr) {
   clearInterval(jvPoll);
   jvPoll = setInterval(function() {
     try {
-      var d = ifr.contentDocument, live = d.getElementById('mic').classList.contains('live');
-      document.getElementById('jv-card').classList.toggle('jv-listen', live);
-      document.getElementById('jv-open').textContent = live ? 'Smetti di ascoltare' : 'Parla con Jarvis';
-      document.getElementById('jv-heard').textContent = d.getElementById('heard').textContent;
-      var rp = d.getElementById('reply').textContent;
-      document.getElementById('jv-reply').textContent = rp === '\u2026' ? 'Ci penso...' : rp;
+      jvStato();
+      var rp = ifr.contentDocument.getElementById('reply').textContent;
+      if (jvUsed) document.getElementById('jv-reply').textContent = rp === '\u2026' ? 'Ci penso...' : rp;
     } catch (e) { clearInterval(jvPoll); }
   }, 300);
 }
-// Parla con Jarvis: carica Jarvis nascosto e accende subito il microfono
+// Parla con Jarvis: il microfono si accende subito (nel gesto del click), Jarvis si carica nascosto
 function jvVoce() {
   var f = document.getElementById('jv-frame'), ifr = f.querySelector('iframe');
-  if (ifr) { jvMic(ifr); return; }
+  if (jvRec) { try { jvRec.stop(); } catch (e) {} return; }
+  if (ifr) { try { ifr.contentWindow.speechSynthesis.cancel(); } catch (e) {} }
+  jvAscolta();
+  if (ifr) return;
   jvBoot();
   f.className = 'jv-frame jv-bg'; f.style.display = 'block';
-  document.getElementById('jv-live').style.display = '';
-  jvCarica(f, function(i) { i.addEventListener('load', function() { jvMic(i, true); jvSpia(i); }); });
+  jvCarica(f, function(i) {
+    i.addEventListener('load', function() {
+      jvSpia(i);
+      if (jvCoda) { var t = jvCoda; jvCoda = null; jvInvia(t); }
+    });
+  });
 }
 function jvStop() {
   var f = document.getElementById('jv-frame'), m = document.getElementById('jv-max');
-  clearInterval(jvPoll); f.innerHTML = ''; f.className = 'jv-frame'; f.style.display = 'none';
+  clearInterval(jvPoll); jvCoda = null; jvUsed = false;
+  if (jvRec) { try { jvRec.abort(); } catch (e) {} jvRec = null; }
+  f.innerHTML = ''; f.className = 'jv-frame'; f.style.display = 'none';
   m.style.display = 'none'; m.textContent = 'Schermo intero';
   document.getElementById('jv-card').classList.remove('jv-full', 'jv-listen');
   document.getElementById('jv-live').style.display = 'none';
   document.getElementById('jv-open').textContent = 'Parla con Jarvis';
   document.getElementById('jv-screen').textContent = 'Apri schermata';
 }
-// Apri schermata: mostra l'interfaccia completa di Jarvis (o la chiude)
 function jvToggle() {
   var f = document.getElementById('jv-frame'), b = document.getElementById('jv-screen'), m = document.getElementById('jv-max');
   if (f.style.display === 'none' || f.classList.contains('jv-bg')) {
