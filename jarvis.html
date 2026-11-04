@@ -980,5 +980,99 @@ if(RPon())rpLoad();
 $('f').onsubmit=e=>{e.preventDefault();const v=$('txt').value.trim();if(v){run(v);$('txt').value=''}};
 render();
 </script>
+<script>
+/* ===== CERVELLO RIPARAZIONI: Jarvis ragiona sui dati reali del negozio e da consigli ===== */
+(function(){
+const rl=()=>{try{return JSON.parse(localStorage.getItem('rp_rl')||'[]')}catch(e){return[]}};
+const ml=()=>{try{return JSON.parse(localStorage.getItem('rp_ml')||'[]')}catch(e){return[]}};
+const eur=n=>'€'+(Math.round(n*100)/100).toString().replace('.',',');
+const cst=r=>{const n=parseFloat(String(r.costo||'').replace(',','.'));return n>0?n:0};
+const tk=s=>norm(s).split(' ').filter(w=>w.length>1);
+const dd=s=>{const m=String(s||'').match(/(\d{1,2})\/(\d{1,2})\/(\d{4})/);return m?new Date(+m[3],+m[2]-1,+m[1]).getTime():0};
+const giorni=t=>t?Math.floor((Date.now()-t)/864e5):0;
+const chiusa=r=>r.stato==='Pronto'||r.stato==='Consegnato';
+const med=a=>{const s=[...a].sort((x,y)=>x-y),m=s.length>>1;return s.length%2?s[m]:(s[m-1]+s[m])/2};
+
+// riparazioni passate che somigliano alla richiesta (stesso modello e stesso problema)
+function simili(q,n,escludi){
+  const T=tk(q);if(!T.length)return[];
+  return rl().filter(r=>r.id!==escludi).map(r=>{const R=tk((r.device||'')+' '+(r.problema||'')+' '+(r.tipo||''));let s=0;T.forEach(w=>{if(R.includes(w))s+=/^\d+$/.test(w)?1.5:1});return{r,s}})
+    .filter(x=>x.s>=2.5).sort((a,b)=>b.s-a.s||dd(b.r.data)-dd(a.r.data)).slice(0,n||6).map(x=>x.r);
+}
+function magaz(q){
+  const T=tk(q),M=ml(),f=m=>m.desc+' (qtà '+(m.qty||0)+', acquisto '+eur(m.pac||0)+', vendita '+eur(m.pven||0)+')';
+  return{rel:M.filter(m=>T.filter(w=>tk(m.desc).includes(w)).length>=2).slice(0,6).map(f),bassi:M.filter(m=>(m.qty||0)<=(m.min||0)).slice(0,8).map(m=>m.desc+' qtà '+(m.qty||0))};
+}
+// tutto cio che l'IA deve sapere per ragionare sulla richiesta
+function pack(q){
+  const S1=simili(q,6),G=magaz(q),cl=rl().filter(r=>chiusa(r)&&cst(r));
+  let o='DATI DEL NEGOZIO (da RepairPro, oggi '+new Date().toLocaleDateString('it-IT')+'): '+ctx();
+  if(S1.length){
+    const cc=S1.filter(r=>cst(r)&&chiusa(r)),cs=cc.length?cc:S1.filter(cst);   // il prezzo medio conta le riparazioni concluse
+    o+='\nRiparazioni passate simili: '+S1.map(r=>(r.device||'?')+' | '+(r.problema||'?')+' | '+(cst(r)?eur(cst(r)):'senza prezzo')+' | '+r.stato+' | '+(r.data||'')+(r.diagnosiJarvis?' | diagnosi: '+String(r.diagnosiJarvis).slice(0,120):'')).join('; ')+'.';
+    if(cs.length)o+=' Prezzo medio di quelle '+(cc.length?'concluse':'(non concluse)')+': '+eur(cs.reduce((a,r)=>a+cst(r),0)/cs.length)+' (da '+eur(Math.min(...cs.map(cst)))+' a '+eur(Math.max(...cs.map(cst)))+').';
+  }else o+='\nNessuna riparazione passata simile nello storico.';
+  if(G.rel.length)o+='\nMagazzino pertinente: '+G.rel.join('; ')+'.';
+  if(G.bassi.length)o+='\nSotto scorta: '+G.bassi.join(', ')+'.';
+  if(cl.length)o+='\nStorico: '+rl().length+' schede, prezzo medio delle concluse '+eur(cl.reduce((a,r)=>a+cst(r),0)/cl.length)+'.';
+  return o;
+}
+// punti di attenzione calcolati sui dati (funzionano anche senza IA)
+function insights(){
+  const R=rl(),M=ml(),oggi=new Date().setHours(0,0,0,0),o=[],ap=R.filter(r=>r.stato!=='Consegnato');
+  const pr=ap.filter(r=>r.stato==='Pronto');
+  if(pr.length)o.push({p:2,t:pr.length+(pr.length===1?' riparazione è pronta':' riparazioni sono pronte')+' da ritirare: '+pr.slice(0,4).map(r=>r.nome).join(', ')+'. Avvisa i clienti.'});
+  ap.filter(r=>r.stato!=='Pronto'&&r.consegna&&new Date(r.consegna).setHours(0,0,0,0)<oggi).forEach(r=>{const g=giorni(new Date(r.consegna).getTime());o.push({p:1,t:'In ritardo: '+r.nome+' ('+(r.device||'?')+'), consegna prevista '+g+(g===1?' giorno':' giorni')+' fa.'})});
+  ap.filter(r=>r.stato==='In lavorazione'&&giorni(dd(r.data))>=7&&!(r.consegna&&new Date(r.consegna).setHours(0,0,0,0)<oggi)).slice(0,3).forEach(r=>o.push({p:3,t:r.nome+' ('+(r.device||'?')+') è in lavorazione da '+giorni(dd(r.data))+' giorni: aggiorna il cliente o sblocca la riparazione.'}));
+  ap.forEach(r=>{const c=cst(r);if(!c)return;const s=simili((r.device||'')+' '+(r.problema||''),8,r.id).filter(x=>chiusa(x)&&cst(x));
+    if(s.length>=2){const m=med(s.map(cst));if(c<m*0.8)o.push({p:2,t:'Prezzo basso per '+r.nome+': '+eur(c)+' contro un prezzo tipico di '+eur(m)+' ('+s.length+' riparazioni simili). Valuta di ritoccarlo.'})}});
+  const sc=ap.filter(r=>!cst(r));if(sc.length)o.push({p:3,t:sc.length+(sc.length===1?' scheda aperta senza preventivo: ':' schede aperte senza preventivo: ')+sc.slice(0,3).map(r=>r.nome).join(', ')+'.'});
+  const b=M.filter(m=>(m.qty||0)<=(m.min||0));if(b.length)o.push({p:2,t:'Magazzino sotto scorta: '+b.slice(0,5).map(m=>m.desc).join(', ')+(b.length>5?' e altri '+(b.length-5):'')+'.'});
+  return o.sort((a,b)=>a.p-b.p).map(x=>x.t);
+}
+async function consigli(){
+  if(!RPon())return speak('Non trovo i dati di RepairPro: aprili prima dalla dashboard.');
+  const L=insights();
+  if(!L.length)return speak('Tutto sotto controllo: nessun ritardo, niente da ritirare e magazzino a posto.');
+  const full=L.map((x,i)=>(i+1)+'. '+x).join('\n');
+  $('reply').textContent='…';
+  try{
+    const a=await ai('Sei '+CFG.name+', consulente del negozio di riparazioni Techandbet. Ti do i punti rilevati sui dati. Dai a '+CFG.call+' consigli concreti in ordine di priorità, in italiano, massimo 5 frasi perché verranno letti ad alta voce. Spiega brevemente il perché e cosa fare per prima cosa. Non inventare dati.',[{role:'user',content:'Punti rilevati:\n'+full}],450);
+    return speak(a);
+  }catch(e){}
+  speak('Ecco cosa vedo. '+L.slice(0,4).join(' '));$('reply').textContent=full;
+}
+// conversazione libera: ora ragiona con storico prezzi, magazzino e schede
+chat=async function(raw){
+  $('reply').textContent='…';
+  hist.push({role:'user',content:raw});hist=hist.slice(-10);
+  while(hist.length&&hist[0].role!=='user')hist.shift();
+  try{
+    const a=await ai('Sei '+CFG.name+', assistente vocale e consulente tecnico di '+CFG.call+', titolare del negozio di riparazioni Techandbet (smartphone, console, PC, elettronica) in Italia. Rispondi in italiano, naturale, massimo 5 frasi perché la risposta viene letta ad alta voce. RAGIONA sui dati reali del negozio qui sotto (riparazioni passate, prezzi applicati, magazzino) prima di rispondere: per i prezzi parti dallo storico del negozio e dal margine tra acquisto e vendita; quando consigli, spiega il perché in breve e dì cosa controlleresti per primo. Se i dati non bastano dillo e dai una stima prudente, senza inventare prezzi o codici ricambio. Puoi anche fare due chiacchiere. Stile: '+STILI[CFG.style]+' '+CFG.extra+'\n\n'+pack(raw),hist,500);
+    hist.push({role:'assistant',content:a});speak(a);
+  }catch(e){hist.pop();speak(errMsg(e))}
+};
+quote=async function(i){
+  $('reply').textContent='Preparo il preventivo…';
+  try{i.prev=await ai('Sei il tecnico e consulente di Techandbet, negozio di riparazioni in Italia. Scrivi una bozza di preventivo breve in italiano: lavorazione, ricambi, forchetta di prezzo in euro e tempi stimati. USA I DATI DEL NEGOZIO: se ci sono riparazioni simili già fatte, basa la forchetta sui loro prezzi reali (dì da quante deriva); segnala se il ricambio è in magazzino e se il prezzo lascia margine rispetto all’acquisto. Se mancano dati dillo e dai una stima prudente. Non inventare codici ricambio.',[{role:'user',content:'Dispositivo: '+(i.d||'n/d')+'. Problema: '+(i.p||'n/d')+'.\n\n'+pack((i.d||'')+' '+(i.p||''))}],600);save();render();speak('Bozza di preventivo pronta per '+i.c+', basata sul tuo storico. La trovi sulla scheda.')}catch(e){speak(errMsg(e))}
+};
+solve=async function(i){
+  $('reply').textContent='Cerco soluzioni…';
+  try{i.sol=await ai('Sei un tecnico esperto di riparazioni elettroniche. Rispondi in italiano, conciso: elenco numerato di 3-5 cause probabili in ordine di probabilità, ciascuna con il test rapido da fare e l’intervento o ricambio. Se nello storico del negozio ci sono casi simili, citali (es. «già risolto 2 volte con sostituzione batteria») e tienili in conto nell’ordine. Non inventare codici ricambio.',[{role:'user',content:'Dispositivo: '+(i.d||'non indicato')+'. Problema: '+(i.p||'non indicato')+'.\n\n'+pack((i.d||'')+' '+(i.p||''))}]);
+    save();render();speak('Ho trovato alcune possibili cause per '+i.c+'. Le vedi sulla scheda.')}catch(e){speak(errMsg(e))}
+};
+// comandi tipo "dammi consigli", "cosa devo fare oggi", "punto della situazione"
+const _run=run;
+run=async function(raw){
+  const t=norm(raw).replace(/^(ehi |ciao |ok )?(jarvis |nexus )?/,'');
+  if(!pendMag&&!pendBuy&&/^(dammi |fammi |vorrei |hai )?(dei |qualche |un )?(consigli|consiglio|suggerimenti)( per oggi| sul negozio| sulla giornata| generali)?$|cosa (devo|dovrei|faccio) fare oggi|punto della situazione|analisi (della )?(giornata|negozio|riparazioni)|come va (il negozio|la giornata)|che priorita ho|su cosa mi concentro/.test(t)){
+    $('heard').textContent='“'+raw+'”';return consigli();
+  }
+  return _run(raw);
+};
+window.JarvisPro={pack,insights,consigli,simili};
+})();
+</script>
+
 </body>
 </html>
